@@ -260,9 +260,9 @@ public class RelayManagerWindow : InfoWindow
 		var compilerResult = new CompilerResult();
 		var signalMessage = ConsoleDisplay.instance.compiler.CompileStringToSignal(message, ref compilerResult);
 		if (compilerResult.compilerResultTag == CompilerResultTag.ERROR) {
-			TMFRSPlugin.Logger.LogError("Compilation Error: " + compilerResult.ErrorMsg);
+			// TODO: Better error display
+			popupBox.PopupWithLabel("Compilation errors: " + compilerResult.errorsCaught);
 			return;
-			// TODO: Actually catch compilation errors, display using the little popup at the bottom that new ideas use
 		}
 
 		// TODO: Handle encrypted messages, somehow
