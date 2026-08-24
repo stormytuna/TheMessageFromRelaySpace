@@ -4,10 +4,12 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using TMFRS.UI;
 using UnityEngine;
-using DSCR;
 
-public class DSCRSocket : MonoBehaviour
+namespace TMFRS.MonoBehaviours;
+
+public class RelaySocket : MonoBehaviour
 {
     private static ClientWebSocket socket;
     private static CancellationTokenSource cancellationToken;
@@ -21,13 +23,14 @@ public class DSCRSocket : MonoBehaviour
         socket = new ClientWebSocket();
 
         try {
+            // TODO: Configurable source
             await TryConnect(socket, new Uri("wss://dscr-relay.dixonary.co.uk"), cancellationToken.Token);
-            Task.Run(() => DSCRSocket.Receive(socket, cancellationToken.Token));
-            Task.Run(() => DSCRSocket.Send(socket, cancellationToken.Token));
+            Task.Run(() => RelaySocket.Receive(socket, cancellationToken.Token));
+            Task.Run(() => RelaySocket.Send(socket, cancellationToken.Token));
         } catch (OperationCanceledException) {
             // noop, we don't want to log errors from closing the game
         } catch (Exception ex) {
-            Plugin.Logger.LogError(ex);
+            TMFRSPlugin.Logger.LogError(ex);
         }
     }
 
@@ -56,12 +59,12 @@ public class DSCRSocket : MonoBehaviour
             var result = await socket.ReceiveAsync(view, token);
             if (result.MessageType == WebSocketMessageType.Close) {
                 await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token);
-                Plugin.Logger.LogInfo("Socket closed");
+                TMFRSPlugin.Logger.LogInfo("Socket closed");
                 return;
             }
 
             var text = ASCII.GetString(buffer[0..result.Count]);
-            DSCRWindow.PrintText(text);
+            RelayWindow.PrintText(text);
             Array.Fill<byte>(buffer, 0, 0, result.Count);
         }
     }
@@ -86,10 +89,10 @@ public class DSCRSocket : MonoBehaviour
         var result = await socket.ReceiveAsync(confirmationBuffer, token);
 
         if (confirmationBuffer[0] == 'K') {
-            Plugin.Logger.LogInfo($"Connected with callsign {Callsign}");
+            TMFRSPlugin.Logger.LogInfo($"Connected with callsign {Callsign}");
         } else {
             // TODO: Handle rejected callsign
-            Plugin.Logger.LogInfo("Could not connect");
+            TMFRSPlugin.Logger.LogInfo("Could not connect");
         }
     }
 }

@@ -1,0 +1,11 @@
+- [ ] Fulfil TODOs in code 
+- [ ] Dictionary stuff
+    - [ ] Prevent dict from deleting signals over 100k
+    - [ ] Allow compiler to compile signals over 100k
+    - [ ] Some way to add signals
+    - [ ] Make deleting player-made signals actually delete them from dict
+- [ ] Player facing error handling
+- [ ] Handle encryption channels
+- [ ] Handle graphs with in-game Visual tab
+- [ ] Config
+    - [ ] Toggle confetti cannon on |-702
