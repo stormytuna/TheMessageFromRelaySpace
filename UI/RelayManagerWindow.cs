@@ -131,8 +131,13 @@ public class RelayManagerWindow : InfoWindow
 
 		callsignInput = inputField.GetComponent<SimpleWriter>();
 		callsignInput.label.transform.position = new Vector3(-29.1f, 5.46f, 0.2141f);
-		callsignInput.label.text = "0000";
 		callsignInput.charsLength = 4; // TODO: Setting charsLength does nothing, why?
+
+		string randomCallsign = "";
+		for (int i = 0; i < 4; i++) {
+			randomCallsign += Random.RandomRangeInt(0, 8);
+		}
+		callsignInput.label.text = randomCallsign;
 
 		var calculatorViewport = calculatorWindow.viewport;
 		var exampleButton = calculatorViewport.GetComponentsInChildren<Transform>().FirstOrDefault(x => x.name == "Round");
