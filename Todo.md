@@ -9,3 +9,4 @@
 - [ ] Handle graphs with in-game Visual tab
 - [ ] Config
     - [ ] Toggle confetti cannon on |-702
+    - [ ] Change websocket source, mfds might not be alive forever

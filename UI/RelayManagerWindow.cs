@@ -31,20 +31,22 @@ public class RelayManagerWindow : InfoWindow
 
 		initRelayButton = true;
 
-		var menuButton = __instance.GetComponentInChildren<WindowElement>();
+		var ideasButton = __instance.tabsList.transform.Find("Ideas Tab");
 
-		var relayButton = GameObject.Instantiate(menuButton, menuButton.transform.position with { y = 4.46f }, Quaternion.identity);
-		relayButton.name = "DSCR"; // TODO: Rename, follow existing standard
-								   // TODO: What is this even doing? why are we modifying localPos?
+		var relayButton = GameObject.Instantiate(ideasButton, ideasButton.transform.position with { y = 4.46f }, Quaternion.identity);
+		relayButton.name = "Relay Tab";
+
+		// TODO: What is this even doing? why are we modifying localPos?
 		var y = relayButton.transform.localPosition.y;
 		y = -0.49f;
 
-		relayButton.transform.SetParent(menuButton.transform.parent);
+		relayButton.transform.SetParent(ideasButton.transform.parent);
 
 		var text = relayButton.GetComponentInChildren<TextMeshPro>();
-		text.text = "DSCR"; // TODO: Rename, probably
+		text.text = "Relay";
 
 		// TODO: Custom icon? Not sure how feasible this is...
+		
 		var button = relayButton.GetComponent<Button3D>();
 		button.OnUseButton = new UnityEngine.Events.UnityEvent();
 		button.OnUseButton.AddListener(() => infoDisplay.SwitchWindow(relayManagerWindow));
@@ -61,13 +63,9 @@ public class RelayManagerWindow : InfoWindow
 
 		infoDisplay = __instance;
 
-		// TODO: Abstract to helper
-		var calendarWindow = Resources.FindObjectsOfTypeAll<Transform>()
-			.Select(t => t.GetComponent<CalendarWindow>())
-			.FirstOrDefault(c => c != null);
-
+		var calendarWindow = UnityHelpers.FindSingleInstanceObject<CalendarWindow>();
 		var relayWindowObj = GameObject.Instantiate(calendarWindow).gameObject;
-		relayWindowObj.name = "DSCR Manager Window"; // TODO: Rename, follow existing standard
+		relayWindowObj.name = "Relay Manager Window";
 		GameObject.DestroyImmediate(relayWindowObj.GetComponent<CalendarWindow>());
 
 		relayWindowObj.SetActive(true);
@@ -81,26 +79,27 @@ public class RelayManagerWindow : InfoWindow
 			child.gameObject.SetActive(true);
 		}
 
-		// Adding at end so Start runs after we destroy calendar stuff
+		// Adding at end so Start runs after we destroy Calendar stuff, otherwise it crashes on startup
 		relayManagerWindow = relayWindowObj.AddComponent<RelayManagerWindow>();
 	}
 
 	private void Start() {
 		relayManagerViewport = transform.GetChild(0).gameObject;
-		relayManagerViewport.name = "DSCR Manager Viewport"; // TODO: Rename
+		relayManagerViewport.name = "Relay Manager Viewport";
 		relayManagerViewport.SetActive(false);
 
 		relayInputViewport = GameObject.Instantiate(relayManagerViewport.gameObject);
 		relayInputViewport.transform.SetParent(transform);
 		relayInputViewport.transform.position = relayManagerViewport.transform.position;
-		relayInputViewport.name = "DSCR Input Viewport"; // TODO: Rename
+		relayInputViewport.name = "Relay Input Viewport";
 		relayInputViewport.SetActive(false);
 
-		// TODO: Move to own method
-		/*
-         * DSCR MANAGER
-         */
+		InitManagerViewport();
+		InitInputViewport();
+		InitRightMonitorTopBar();
+	}
 
+	private void InitManagerViewport() {
 		relayManagerViewport.GetComponentInChildren<TextMeshPro>().text = "DSCR Login"; // Rename
 
 		calculatorWindow = GameObject.Find("Calculator Window").GetComponent<CalculatorWindow>();
@@ -124,15 +123,7 @@ public class RelayManagerWindow : InfoWindow
 		inputField.transform.position = new Vector3(-29.7f, 5.5f, 0.22f);
 
 		var inputFieldBackground = inputField.GetComponent<MeshFilter>().mesh;
-		// TODO: Move to helper
-		var vertices = new Vector3[inputFieldBackground.vertices.Length];
-		for (int i = 0; i < inputFieldBackground.vertices.Length; i++) {
-			var vertex = inputFieldBackground.vertices[i];
-			vertex.x *= 0.2f;
-			vertex.y *= 0.6f;
-			vertices[i] = vertex;
-		}
-		inputFieldBackground.vertices = vertices;
+		UnityHelpers.ScaleMeshVertices(inputFieldBackground, 0.2f, 0.6f);
 
 		callsignInput = inputField.GetComponent<SimpleWriter>();
 		callsignInput.label.transform.position = new Vector3(-29.1f, 5.46f, 0.2141f);
@@ -148,46 +139,39 @@ public class RelayManagerWindow : InfoWindow
 		confirmButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		confirmButton.GetComponent<Button3D>().OnUseButton.AddListener(SetCallsign);
 		confirmButton.GetComponentInChildren<TextMeshPro>().text = "Set";
+	}
 
-		/*
-         * DSCR INPUT
-         */
-		relayInputViewport.GetComponentInChildren<TextMeshPro>().text = "DSCR Input"; // TODO: Change name
+	private void InitInputViewport() {
+		relayInputViewport.GetComponentInChildren<TextMeshPro>().text = "Relay Input";
 
-		// TODO: Helper
-		var inputDisplay = Resources.FindObjectsOfTypeAll<Transform>()
-			.Select(t => t.GetComponent<InputDisplaySelector>())
-			.FirstOrDefault(c => c != null);
+		var inputDisplay = UnityHelpers.FindSingleInstanceObject<InputDisplaySelector>();
 
 		var dscrInputObj = GameObject.Instantiate(inputDisplay);
 		dscrInputObj.transform.SetParent(relayInputViewport.transform);
 		dscrInputObj.transform.position = new Vector3(-30.1f, 5.55f, 0.22f);
 		dscrInputObj.name = "DSCR Input";
 		relayInput = dscrInputObj.GetComponent<TextMeshPro>();
-		relayInput.text = ""; // TODO: Do we even need to do this?
 		relayInput.fontSize = 0.9f;
 		dscrInputObj.GetComponent<InputDisplaySelector>().tInput = relayInput;
 
-		// TODO: ConsoleDisplay.Instance
-		var console = Resources.FindObjectsOfTypeAll<Transform>()
-			.Select(t => t.GetComponent<ConsoleDisplay>())
-			.FirstOrDefault(c => c != null);
-		var sendMessageButton = GameObject.Instantiate(console.readMessageGroup.transform.GetChild(1)); // TODO: Perchance use .Find
-		sendMessageButton.name = "DSCR Send Message"; // TODO: Rename
+		var respondButton = ConsoleDisplay.instance.readMessageGroup.transform.Find("Respond Button");
+		var sendMessageButton = GameObject.Instantiate(respondButton);
+		sendMessageButton.name = "Relay Send Message Button";
 		sendMessageButton.transform.SetParent(relayInputViewport.transform);
 		sendMessageButton.transform.position = new Vector3(-29.5f, 5.68f, 0.25f);
 		sendMessageButton.GetComponentInChildren<TextMeshPro>().text = "Send";
 		sendMessageButton.GetComponentInChildren<Button3D>().OnUseButton = new UnityEvent();
 		sendMessageButton.GetComponentInChildren<Button3D>().OnUseButton.AddListener(SendMessage);
+	}
 
-		/*
-         * Right hand side monitor
-         */
+	// TODO: Should this even be here..?
+	private void InitRightMonitorTopBar() {
 		var topBar = GameObject.Instantiate(relayManagerViewport.transform.Find("Top Tab"));
-		topBar.name = "Top Tab Right"; // TODO: Rename
-		topBar.GetComponentInChildren<TextMeshPro>().text = "DSCR"; // TODO: Rename
-		GameObject.Destroy(topBar.GetComponentInChildren<Button3D>().gameObject); // TODO: Probably has many more objects attached that go unused
-																				  // TODO: Recompile button
+		topBar.name = "Top Tab Right";
+		topBar.GetComponentInChildren<TextMeshPro>().text = "Relay";
+		GameObject.Destroy(topBar.GetComponentInChildren<Button3D>().gameObject); // TODO: Probably has many more objects attached that go unused, they need to be removed
+
+		// TODO: Recompile button
 	}
 
 	[HarmonyPatch(typeof(WorldSpaceClicker), "ScanForHitbox")]
@@ -201,6 +185,7 @@ public class RelayManagerWindow : InfoWindow
 	}
 
 	public override void Open() {
+		// TODO: Opening relay from RESPOND window bugs out
 		if (RelaySocket.Callsign == null) {
 			relayManagerViewport.SetActive(true);
 		}
@@ -240,6 +225,7 @@ public class RelayManagerWindow : InfoWindow
 		var signalMessage = ConsoleDisplay.instance.compiler.CompileStringToSignal(message, ref compilerResult);
 		if (compilerResult.compilerResultTag == CompilerResultTag.ERROR) {
 			TMFRSPlugin.Logger.LogError("Compilation Error: " + compilerResult.ErrorMsg);
+			return;
 			// TODO: Actually catch compilation errors, display using the little popup at the bottom that new ideas use
 		}
 

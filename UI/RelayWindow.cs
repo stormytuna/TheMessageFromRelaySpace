@@ -28,7 +28,7 @@ public class RelayWindow
 	[HarmonyPatch(typeof(ConsoleDisplay), "Awake")]
 	[HarmonyPostfix]
 	public static void Init(ConsoleDisplay __instance) {
-		relayRoot = new GameObject("DSCR"); // TODO: Rename
+		relayRoot = new GameObject("Relay Output");
 		relayRoot.SetActive(false);
 
 		calculatorWindow = GameObject.Find("Calculator Window").GetComponent<CalculatorWindow>();
@@ -36,8 +36,8 @@ public class RelayWindow
 		var topBar = GameObject.Instantiate(__instance.readMessageGroup);
 		topBar.transform.SetParent(relayRoot.transform);
 		topBar.transform.position = new Vector3(-27.75f, 5f, -0.005f);
-		topBar.name = "DSCR Top Bar"; // TODO: Rename
-		topBar.GetComponentInChildren<TextMeshPro>().text = "DSCR"; // TODO: Rename
+		topBar.name = "Relay Top Bar";
+		topBar.GetComponentInChildren<TextMeshPro>().text = "Relay";
 
 		var logoutButton = topBar.transform.Find("Respond Button");
 		logoutButton.GetComponentInChildren<TextMeshPro>().text = "Logout";
@@ -47,7 +47,7 @@ public class RelayWindow
 		var dscrOutputObj = GameObject.Instantiate(GameObject.Find("Output Display"));
 		dscrOutputObj.transform.SetParent(relayRoot.transform);
 		dscrOutputObj.transform.position = new Vector3(-27.9f, 5.55f, 0.22f);
-		dscrOutputObj.name = "DSCR Output"; // TODO: Rename
+		dscrOutputObj.name = "Relay Output Signals";
 		relayOutput = dscrOutputObj.GetComponent<TextMeshPro>();
 		relayOutput.fontSize = 0.9f;
 
@@ -67,7 +67,7 @@ public class RelayWindow
 	public static void SetCallsign(string callsign) {
 		if (relaySocket == null) {
 			RelaySocket.Callsign = callsign;
-			var socketObj = new GameObject("DSCR Socket"); // TODO: Rename
+			var socketObj = new GameObject("Relay Socket");
 			socketObj.AddComponent<RelaySocket>();
 			relaySocket = socketObj.GetComponent<RelaySocket>();
 			return;
@@ -83,7 +83,7 @@ public class RelayWindow
 
 		relayRoot.SetActive(true);
 
-		var console = GameObject.Find("Console Display").GetComponent<ConsoleDisplay>();
+		var console = ConsoleDisplay.instance;
 		console.display.gameObject.SetActive(false);
 		console.readMessageGroup.gameObject.SetActive(false);
 		console.monitorVisual.OnWipe();
@@ -103,7 +103,7 @@ public class RelayWindow
 
 		RelayManagerWindow.infoDisplay.SwitchWindow(RelayManagerWindow.infoDisplay.tabsWindow);
 
-		var console = GameObject.Find("Console Display").GetComponent<ConsoleDisplay>();
+		var console = ConsoleDisplay.instance;
 		console.display.gameObject.SetActive(true);
 		console.readMessageGroup.gameObject.SetActive(true);
 		console.monitorVisual.OnWipe();
