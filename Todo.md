@@ -7,6 +7,7 @@
 - [ ] Player facing error handling
 - [ ] Handle encryption channels
 - [ ] Handle graphs with in-game Visual tab
+- [ ] Print new messages character by character
 - [ ] Config
     - [ ] Toggle confetti cannon on |-702
     - [ ] Change websocket source, mfds might not be alive forever

@@ -11,16 +11,19 @@ namespace TMFRS.UI;
 public class RelayManagerWindow : InfoWindow
 {
 	public static InfoDisplay infoDisplay;
+	public static RelaySocket relaySocket;
 
 	private static InfoWindow relayManagerWindow;
 	private static SimpleWriter callsignInput;
 	private static TextMeshPro relayInput;
-	private static bool initRelayButton = false;
-	private static bool initInfoDisplay = false;
-	private static CalculatorWindow calculatorWindow;
-
 	public static GameObject relayManagerViewport;
 	public static GameObject relayInputViewport;
+	private static bool initRelayButton = false;
+	private static bool initInfoDisplay = false;
+
+	private static CalculatorWindow calculatorWindow;
+	private static PopupBox popupBox;
+
 
 	[HarmonyPatch(typeof(TabsWindow), "Open")]
 	[HarmonyPostfix]
@@ -103,6 +106,7 @@ public class RelayManagerWindow : InfoWindow
 		relayManagerViewport.GetComponentInChildren<TextMeshPro>().text = "DSCR Login"; // Rename
 
 		calculatorWindow = GameObject.Find("Calculator Window").GetComponent<CalculatorWindow>();
+		popupBox = UnityHelpers.FindSingleInstanceObject<PopupBox>("Idea Popup");
 
 		var callsignLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
 		callsignLabel.name = "Callsign Label";
@@ -200,23 +204,55 @@ public class RelayManagerWindow : InfoWindow
 		relayInputViewport.SetActive(false);
 	}
 
+	// TODO: Update callsign if asked
 	private void SetCallsign() {
 		var callsign = callsignInput.label.text
-			.Where(c => (c - '0') <= 7 && (c - '0') >= 0)
+			.Where(c => (c - '0') <= 9 && (c - '0') >= 0)
 			.Join(delimiter: "");
 
-		// TODO: What if callsign isn't 4 chars after clamping to [0..8]?
-
-		if (!int.TryParse(callsign, out var callsignBase8)) {
-			// TODO: Player facing error message
-			TMFRSPlugin.Logger.LogInfo("Bad callsign: " + callsign);
+		if (callsign.Length != 4) {
+			popupBox.PopupWithLabel("Callsign length must be 4");
+			return;
+		}
+		
+		if (callsign.Any(c => c == '8' || c == '9')) {
+			popupBox.PopupWithLabel("Callsign must be in base 8");
 			return;
 		}
 
+		var callsignBase8 = int.Parse(callsign);
 		var callsignBase10 = calculatorWindow.EuclideanBaseChange(callsignBase8, 8, 10);
-		RelayWindow.SetCallsign(callsignBase10);
+
+		if (relaySocket == null) {
+			RelaySocket.Callsign = callsignBase10;
+			var socketObj = new GameObject("Relay Socket");
+			socketObj.AddComponent<RelaySocket>();
+			relaySocket = socketObj.GetComponent<RelaySocket>();
+		}
+	}
+
+	// Called by RelaySocket
+	// TODO: Perchance rewrite these to use events
+	public static void GoodCallsign() {
 		relayManagerViewport.SetActive(false);
 		relayInputViewport.SetActive(true);
+	}
+
+	public static void BadCallsign() {
+		popupBox.PopupWithLabel("Callsign already in use");
+	}
+
+	public static void Disconnect() {
+		RelayManagerWindow.infoDisplay.SwitchWindow(RelayManagerWindow.infoDisplay.tabsWindow);
+
+		if (RelayManagerWindow.relaySocket == null) {
+			return;
+		}
+
+		RelayManagerWindow.relaySocket.Disconnect();
+		GameObject.Destroy(RelayManagerWindow.relaySocket);
+		RelayManagerWindow.relaySocket = null;
+		RelaySocket.Callsign = null;
 	}
 
 	private static void SendMessage() {

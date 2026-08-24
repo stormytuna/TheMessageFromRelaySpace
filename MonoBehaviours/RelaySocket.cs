@@ -24,7 +24,15 @@ public class RelaySocket : MonoBehaviour
 
 		try {
 			// TODO: Configurable source
-			await TryConnect(socket, new Uri("wss://dscr-relay.dixonary.co.uk"), cancellationToken.Token);
+			var goodCallsign = await TryConnect(socket, new Uri("wss://dscr-relay.dixonary.co.uk"), cancellationToken.Token);
+			if (!goodCallsign) {
+				RelayManagerWindow.BadCallsign();
+				Disconnect();
+				return;
+			} else {
+				RelayManagerWindow.GoodCallsign();
+			}
+
 			Task.Run(() => RelaySocket.Receive(socket, cancellationToken.Token));
 			Task.Run(() => RelaySocket.Send(socket, cancellationToken.Token));
 		}
@@ -79,7 +87,7 @@ public class RelaySocket : MonoBehaviour
 		}
 	}
 
-	public static async Task TryConnect(ClientWebSocket socket, Uri uri, CancellationToken token) {
+	public static async Task<bool> TryConnect(ClientWebSocket socket, Uri uri, CancellationToken token) {
 		var confirmationBuffer = new byte[8];
 		var confirmationMemory = new Memory<byte>(confirmationBuffer);
 
@@ -90,12 +98,6 @@ public class RelaySocket : MonoBehaviour
 		await socket.SendAsync(new Memory<byte>(ASCII.GetBytes(message)), WebSocketMessageType.Text, true, default);
 		var result = await socket.ReceiveAsync(confirmationBuffer, token);
 
-		if (confirmationBuffer[0] == 'K') {
-			TMFRSPlugin.Logger.LogInfo($"Connected with callsign {Callsign}");
-		}
-		else {
-			// TODO: Handle rejected callsign
-			TMFRSPlugin.Logger.LogInfo("Could not connect");
-		}
+		return confirmationBuffer[0] == 'K';
 	}
 }

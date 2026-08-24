@@ -15,12 +15,11 @@ public class RelayWindow
 {
 	private const int LinesPerPage = 12;
 
-	private static GameObject relayRoot = null;
-	private static TextMeshPro relayOutput = null;
-	private static RelaySocket relaySocket = null;
-	private static ScrollBar3D scrollbar = null;
-	private static ScrollArea scrollArea = null;
-	private static CalculatorWindow calculatorWindow = null;
+	private static GameObject relayRoot;
+	private static TextMeshPro relayOutput;
+	private static ScrollBar3D scrollbar;
+	private static ScrollArea scrollArea;
+	private static CalculatorWindow calculatorWindow;
 
 	private static float lineHeight;
 	private static float totalDisplayHeight;
@@ -63,19 +62,6 @@ public class RelayWindow
 		lineHeight = totalDisplayHeight / LinesPerPage;
 	}
 
-	// TODO: Do we really need to make the socket in this object specifically?
-	public static void SetCallsign(string callsign) {
-		if (relaySocket == null) {
-			RelaySocket.Callsign = callsign;
-			var socketObj = new GameObject("Relay Socket");
-			socketObj.AddComponent<RelaySocket>();
-			relaySocket = socketObj.GetComponent<RelaySocket>();
-			return;
-		}
-
-		// TODO: Update callsign if asked
-	}
-
 	public static void TryShow() {
 		if (relayRoot.activeSelf) {
 			return;
@@ -91,17 +77,9 @@ public class RelayWindow
 
 	public static void LogOut() {
 		relayRoot.SetActive(false);
-
-		if (relaySocket != null) {
-			relaySocket.Disconnect();
-			GameObject.Destroy(relaySocket);
-			relaySocket = null;
-		}
-
 		relayOutput.text = "";
-		RelaySocket.Callsign = null;
 
-		RelayManagerWindow.infoDisplay.SwitchWindow(RelayManagerWindow.infoDisplay.tabsWindow);
+		RelayManagerWindow.Disconnect();
 
 		var console = ConsoleDisplay.instance;
 		console.display.gameObject.SetActive(true);
