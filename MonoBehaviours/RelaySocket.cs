@@ -9,6 +9,8 @@ using UnityEngine;
 
 namespace TMFRS.MonoBehaviours;
 
+// Adapted, with permission, from https://codeberg.org/TacoConKvass/dscr-cli/src/commit/8683a0902571f0e399dbf131365e65002589286a/src/dscr-client/DscrSocket.cs
+
 public class RelaySocket : MonoBehaviour
 {
 	private static ClientWebSocket socket;
@@ -16,6 +18,7 @@ public class RelaySocket : MonoBehaviour
 	private static Encoding ASCII => Encoding.ASCII;
 
 	public static string? Callsign = null;
+	public static bool UpdateCallsign = false;
 	public static Queue<string> EnqueuedMessages = new Queue<string>();
 
 	private async void Start() {
@@ -35,6 +38,7 @@ public class RelaySocket : MonoBehaviour
 
 			Task.Run(() => RelaySocket.Receive(socket, cancellationToken.Token));
 			Task.Run(() => RelaySocket.Send(socket, cancellationToken.Token));
+			Task.Run(() => RelaySocket.TryUpdateCallsign(socket, cancellationToken.Token));
 		}
 		catch (OperationCanceledException) {
 			// noop, we don't want to log errors from closing the game
@@ -74,7 +78,15 @@ public class RelaySocket : MonoBehaviour
 			}
 
 			var text = ASCII.GetString(buffer[0..result.Count]);
-			RelayWindow.PrintText(text);
+
+			if (text[0] == 'K') {
+				RelayManagerWindow.GoodCallsign();
+			} else if (text[0] == 'U') {
+				RelayManagerWindow.BadCallsign();
+			} else {
+				RelayWindow.PrintText(text);
+			}
+
 			Array.Fill<byte>(buffer, 0, 0, result.Count);
 		}
 	}
@@ -84,6 +96,21 @@ public class RelaySocket : MonoBehaviour
 			if (EnqueuedMessages.Count > 0) {
 				await socket.SendAsync(ASCII.GetBytes(EnqueuedMessages.Dequeue()).AsMemory<byte>(), WebSocketMessageType.Text, true, token);
 			}
+		}
+	}
+
+	public static async Task TryUpdateCallsign(ClientWebSocket socket, CancellationToken token) {
+		while (socket.State == WebSocketState.Open) {
+			if (!UpdateCallsign) {
+				continue;
+			}
+
+			var message = $"S,{Callsign},0";
+
+			await socket.SendAsync(new Memory<byte>(ASCII.GetBytes(message)), WebSocketMessageType.Text, true, default);
+			UpdateCallsign = false;
+
+			// Handling result in Receive
 		}
 	}
 

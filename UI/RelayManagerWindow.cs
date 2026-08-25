@@ -23,6 +23,7 @@ public class RelayManagerWindow : InfoWindow
 
 	private static CalculatorWindow calculatorWindow;
 	private static PopupBox popupBox;
+	private static GameObject switchToInputButton;
 
 
 	[HarmonyPatch(typeof(TabsWindow), "Open")]
@@ -103,7 +104,7 @@ public class RelayManagerWindow : InfoWindow
 	}
 
 	private void InitManagerViewport() {
-		relayManagerViewport.GetComponentInChildren<TextMeshPro>().text = "DSCR Login"; // Rename
+		relayManagerViewport.GetComponentInChildren<TextMeshPro>().text = "Relay Manager"; // Rename
 
 		calculatorWindow = GameObject.Find("Calculator Window").GetComponent<CalculatorWindow>();
 		popupBox = UnityHelpers.FindSingleInstanceObject<PopupBox>("Idea Popup");
@@ -129,9 +130,10 @@ public class RelayManagerWindow : InfoWindow
 		var inputFieldBackground = inputField.GetComponent<MeshFilter>().mesh;
 		UnityHelpers.ScaleMeshVertices(inputFieldBackground, 0.2f, 0.6f);
 
+		// TODO: Callsign repurposes the float input field, which has maxLength = 36 and allows invalid chars like 8, 9, .
+		// Need to update it somehow, patching would work but is clunky, not sure how to create a custom input field... requires thought
 		callsignInput = inputField.GetComponent<SimpleWriter>();
 		callsignInput.label.transform.position = new Vector3(-29.1f, 5.46f, 0.2141f);
-		callsignInput.charsLength = 4; // TODO: Setting charsLength does nothing, why?
 
 		string randomCallsign = "";
 		for (int i = 0; i < 4; i++) {
@@ -142,12 +144,28 @@ public class RelayManagerWindow : InfoWindow
 		var calculatorViewport = calculatorWindow.viewport;
 		var exampleButton = calculatorViewport.GetComponentsInChildren<Transform>().FirstOrDefault(x => x.name == "Round");
 		var confirmButton = GameObject.Instantiate(exampleButton);
-		confirmButton.name = "Confirm Callsign";
+		confirmButton.name = "Confirm Callsign Button";
 		confirmButton.transform.SetParent(relayManagerViewport.transform);
 		confirmButton.transform.position = new Vector3(-29.3f, 5.5f, 0.216f);
 		confirmButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		confirmButton.GetComponent<Button3D>().OnUseButton.AddListener(SetCallsign);
 		confirmButton.GetComponentInChildren<TextMeshPro>().text = "Set";
+
+		var respondButton = ConsoleDisplay.instance.readMessageGroup.transform.Find("Respond Button");
+		switchToInputButton = GameObject.Instantiate(respondButton).gameObject;
+		switchToInputButton.name = "Relay Input Button";
+		switchToInputButton.transform.SetParent(relayManagerViewport.transform);
+		switchToInputButton.transform.position = new Vector3(-29.38f, 5.675f, 0.25f);
+		switchToInputButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
+		switchToInputButton.GetComponent<Button3D>().OnUseButton.AddListener(SwitchToInput);
+		switchToInputButton.GetComponentInChildren<TextMeshPro>().text = "Input";
+		GameObject.Destroy(switchToInputButton.transform.Find("Icon").gameObject);
+		UnityHelpers.ScaleMeshVertices(switchToInputButton.GetComponent<MeshFilter>().mesh, 0.6f);
+		switchToInputButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.4f;
+		switchToInputButton.gameObject.SetActive(false);
+
+		var switchToInputText = switchToInputButton.transform.Find("Text");
+		switchToInputText.position += Vector3.right * 0.0325f;
 	}
 
 	private void InitInputViewport() {
@@ -155,22 +173,42 @@ public class RelayManagerWindow : InfoWindow
 
 		var inputDisplay = UnityHelpers.FindSingleInstanceObject<InputDisplaySelector>();
 
-		var dscrInputObj = GameObject.Instantiate(inputDisplay);
-		dscrInputObj.transform.SetParent(relayInputViewport.transform);
-		dscrInputObj.transform.position = new Vector3(-30.1f, 5.55f, 0.22f);
-		dscrInputObj.name = "DSCR Input";
-		relayInput = dscrInputObj.GetComponent<TextMeshPro>();
+		var relayInputObj = GameObject.Instantiate(inputDisplay);
+		relayInputObj.transform.SetParent(relayInputViewport.transform);
+		relayInputObj.transform.position = new Vector3(-30.1f, 5.55f, 0.22f);
+		relayInputObj.name = "Relay Input";
+		relayInput = relayInputObj.GetComponent<TextMeshPro>();
 		relayInput.fontSize = 0.9f;
-		dscrInputObj.GetComponent<InputDisplaySelector>().tInput = relayInput;
+		relayInputObj.GetComponent<InputDisplaySelector>().tInput = relayInput;
 
 		var respondButton = ConsoleDisplay.instance.readMessageGroup.transform.Find("Respond Button");
 		var sendMessageButton = GameObject.Instantiate(respondButton);
 		sendMessageButton.name = "Relay Send Message Button";
 		sendMessageButton.transform.SetParent(relayInputViewport.transform);
-		sendMessageButton.transform.position = new Vector3(-29.5f, 5.68f, 0.25f);
+		sendMessageButton.transform.position = new Vector3(-29.34f, 5.675f, 0.25f);
 		sendMessageButton.GetComponentInChildren<TextMeshPro>().text = "Send";
 		sendMessageButton.GetComponentInChildren<Button3D>().OnUseButton = new UnityEvent();
 		sendMessageButton.GetComponentInChildren<Button3D>().OnUseButton.AddListener(SendMessage);
+		GameObject.Destroy(sendMessageButton.transform.Find("Icon").gameObject);
+		UnityHelpers.ScaleMeshVertices(sendMessageButton.GetComponent<MeshFilter>().mesh, 0.5f);
+		sendMessageButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.5f;
+
+		var sendMessageText = sendMessageButton.transform.Find("Text");
+		sendMessageText.position += Vector3.right * 0.0325f;
+
+		var managerButton = GameObject.Instantiate(respondButton);
+		managerButton.name = "Relay Manager Button";
+		managerButton.transform.SetParent(relayInputViewport.transform);
+		managerButton.transform.position = new Vector3(-29.73f, 5.675f, 0.25f);
+		managerButton.GetComponentInChildren<TextMeshPro>().text = "Manager";
+		managerButton.GetComponentInChildren<Button3D>().OnUseButton = new UnityEvent();
+		managerButton.GetComponentInChildren<Button3D>().OnUseButton.AddListener(SwitchToManager);
+		GameObject.Destroy(managerButton.transform.Find("Icon").gameObject);
+		UnityHelpers.ScaleMeshVertices(managerButton.GetComponent<MeshFilter>().mesh, 0.8f);
+		managerButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.2f;
+
+		var managerText = managerButton.transform.Find("Text");
+		managerText.position += Vector3.right * 0.0355f;
 	}
 
 	// TODO: Should this even be here..?
@@ -233,7 +271,11 @@ public class RelayManagerWindow : InfoWindow
 			var socketObj = new GameObject("Relay Socket");
 			socketObj.AddComponent<RelaySocket>();
 			relaySocket = socketObj.GetComponent<RelaySocket>();
+			return;
 		}
+
+		RelaySocket.Callsign = callsignBase10;
+		RelaySocket.UpdateCallsign = true;
 	}
 
 	// Called by RelaySocket
@@ -241,6 +283,8 @@ public class RelayManagerWindow : InfoWindow
 	public static void GoodCallsign() {
 		relayManagerViewport.SetActive(false);
 		relayInputViewport.SetActive(true);
+		switchToInputButton.SetActive(true);
+		popupBox.PopupWithLabel("Callsign set to " + callsignInput.label.text);
 	}
 
 	public static void BadCallsign() {
@@ -254,6 +298,7 @@ public class RelayManagerWindow : InfoWindow
 			return;
 		}
 
+		switchToInputButton.SetActive(false);
 		RelayManagerWindow.relaySocket.Disconnect();
 		GameObject.Destroy(RelayManagerWindow.relaySocket);
 		RelayManagerWindow.relaySocket = null;
@@ -278,5 +323,15 @@ public class RelayManagerWindow : InfoWindow
 		RelaySocket.QueueSend(compiledMessage);
 
 		TextDummyManager.Instance_PuzzleInput.Clear();
+	}
+
+	private static void SwitchToManager() {
+		relayManagerViewport.SetActive(true);
+		relayInputViewport.SetActive(false);
+	}
+
+	private static void SwitchToInput() {
+		relayManagerViewport.SetActive(false);
+		relayInputViewport.SetActive(true);
 	}
 }

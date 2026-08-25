@@ -43,11 +43,11 @@ public class RelayWindow
 		logoutButton.GetComponentInChildren<Button3D>().OnUseButton = new UnityEvent();
 		logoutButton.GetComponentInChildren<Button3D>().OnUseButton.AddListener(LogOut);
 
-		var dscrOutputObj = GameObject.Instantiate(GameObject.Find("Output Display"));
-		dscrOutputObj.transform.SetParent(relayRoot.transform);
-		dscrOutputObj.transform.position = new Vector3(-27.9f, 5.55f, 0.22f);
-		dscrOutputObj.name = "Relay Output Signals";
-		relayOutput = dscrOutputObj.GetComponent<TextMeshPro>();
+		var relayOutputObj = GameObject.Instantiate(GameObject.Find("Output Display"));
+		relayOutputObj.transform.SetParent(relayRoot.transform);
+		relayOutputObj.transform.position = new Vector3(-27.9f, 5.55f, 0.22f);
+		relayOutputObj.name = "Relay Output Signals";
+		relayOutput = relayOutputObj.GetComponent<TextMeshPro>();
 		relayOutput.fontSize = 0.9f;
 
 		scrollbar = topBar.GetComponentInChildren<ScrollBar3D>();
