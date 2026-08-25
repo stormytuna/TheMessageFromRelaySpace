@@ -1,9 +1,11 @@
+using System;
 using System.Linq;
 using HarmonyLib;
 using TMFRS.MonoBehaviours;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using Random = UnityEngine.Random;
 
 namespace TMFRS.UI;
 
@@ -13,17 +15,24 @@ public class RelayManagerWindow : InfoWindow
 	public static InfoDisplay infoDisplay;
 	public static RelaySocket relaySocket;
 
+	private static bool initRelayButton = false;
+	private static bool initInfoDisplay = false;
+	private static bool reinitDict = false;
+
+	private static GameObject relayManagerViewport;
+	private static GameObject relayInputViewport;
 	private static InfoWindow relayManagerWindow;
 	private static SimpleWriter callsignInput;
 	private static TextMeshPro relayInput;
-	public static GameObject relayManagerViewport;
-	public static GameObject relayInputViewport;
-	private static bool initRelayButton = false;
-	private static bool initInfoDisplay = false;
+	private static GameObject switchToInputButton;
+	private static TextMeshPro newSignalIdInput;
+	private static TextMeshPro newSignalNameInput;
+
 
 	private static CalculatorWindow calculatorWindow;
 	private static PopupBox popupBox;
-	private static GameObject switchToInputButton;
+	private static Autosaver autosaver;
+	private static DictionaryWindow dictionaryWindow;
 
 
 	[HarmonyPatch(typeof(TabsWindow), "Open")]
@@ -101,6 +110,9 @@ public class RelayManagerWindow : InfoWindow
 		InitManagerViewport();
 		InitInputViewport();
 		InitRightMonitorTopBar();
+
+		autosaver = UnityHelpers.FindSingleInstanceObject<Autosaver>();
+		dictionaryWindow = UnityHelpers.FindSingleInstanceObject<DictionaryWindow>();
 	}
 
 	private void InitManagerViewport() {
@@ -151,7 +163,7 @@ public class RelayManagerWindow : InfoWindow
 		confirmButton.GetComponent<Button3D>().OnUseButton.AddListener(SetCallsign);
 		confirmButton.GetComponentInChildren<TextMeshPro>().text = "Set";
 
-		var respondButton = ConsoleDisplay.instance.readMessageGroup.transform.Find("Respond Button");
+		var respondButton = ConsoleDisplay.Instance.readMessageGroup.transform.Find("Respond Button");
 		switchToInputButton = GameObject.Instantiate(respondButton).gameObject;
 		switchToInputButton.name = "Relay Input Button";
 		switchToInputButton.transform.SetParent(relayManagerViewport.transform);
@@ -166,6 +178,39 @@ public class RelayManagerWindow : InfoWindow
 
 		var switchToInputText = switchToInputButton.transform.Find("Text");
 		switchToInputText.position += Vector3.right * 0.0325f;
+
+		var exampleDictEntry = calculatorWindow.viewport.GetComponentsInChildren<SimpleWriter>(true)
+			.First(x => x.name == "Name Input");
+		
+		var newSignalId = GameObject.Instantiate(calculatorWindow.operand1.gameObject);
+		newSignalId.name = "New Signal ID Input";
+		newSignalId.transform.SetParent(relayManagerViewport.transform);
+		newSignalId.transform.position = new Vector3(-30.755f, 5.1f, 0.22f);
+		UnityHelpers.ScaleMeshVertices(newSignalId.GetComponent<MeshFilter>().mesh, 0.3f, 0.6f);
+
+		// TODO: Lock signal text to be `-XXXXXX`
+		newSignalIdInput = newSignalId.GetComponentInChildren<TextMeshPro>();
+		newSignalIdInput.text = "-999999";
+		newSignalIdInput.transform.localPosition = new Vector3(0.3503f, -0.2237f, -0.59f);
+
+		var newSignalName = GameObject.Instantiate(calculatorWindow.operand1.gameObject);
+		newSignalName.name = "New Signal Name Input";
+		newSignalName.transform.SetParent(relayManagerViewport.transform);
+		newSignalName.transform.position = new Vector3(-29.95f, 5.1f, 0.22f);
+		UnityHelpers.ScaleMeshVertices(newSignalName.GetComponent<MeshFilter>().mesh, 0.5f, 0.6f);
+		newSignalName.transform.GetComponent<SimpleWriter>().dummyType = InputDummyType.TermName;
+
+		newSignalNameInput = newSignalName.GetComponentInChildren<TextMeshPro>();
+		newSignalNameInput.text = "MYCOOLSIGNAL";
+		newSignalNameInput.transform.localPosition = new Vector3(0.25f, -0.2237f, -0.59f);
+
+		var makeNewSignalButton = GameObject.Instantiate(exampleButton);
+		makeNewSignalButton.name = "Make New Dict Entry Button";
+		makeNewSignalButton.transform.SetParent(relayManagerViewport.transform);
+		makeNewSignalButton.transform.position = new Vector3(-29.3f, 5.1f, 0.216f);
+		makeNewSignalButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
+		makeNewSignalButton.GetComponent<Button3D>().OnUseButton.AddListener(CreateNewDictEntry);
+		makeNewSignalButton.GetComponentInChildren<TextMeshPro>().text = "Make";
 	}
 
 	private void InitInputViewport() {
@@ -181,7 +226,7 @@ public class RelayManagerWindow : InfoWindow
 		relayInput.fontSize = 0.9f;
 		relayInputObj.GetComponent<InputDisplaySelector>().tInput = relayInput;
 
-		var respondButton = ConsoleDisplay.instance.readMessageGroup.transform.Find("Respond Button");
+		var respondButton = ConsoleDisplay.Instance.readMessageGroup.transform.Find("Respond Button");
 		var sendMessageButton = GameObject.Instantiate(respondButton);
 		sendMessageButton.name = "Relay Send Message Button";
 		sendMessageButton.transform.SetParent(relayInputViewport.transform);
@@ -281,8 +326,7 @@ public class RelayManagerWindow : InfoWindow
 	// Called by RelaySocket
 	// TODO: Perchance rewrite these to use events
 	public static void GoodCallsign() {
-		relayManagerViewport.SetActive(false);
-		relayInputViewport.SetActive(true);
+		SwitchToInput();
 		switchToInputButton.SetActive(true);
 		popupBox.PopupWithLabel("Callsign set to " + callsignInput.label.text);
 	}
@@ -308,9 +352,10 @@ public class RelayManagerWindow : InfoWindow
 	private static void SendMessage() {
 		var message = TextDummyManager.Instance_PuzzleInput.currText.ToUpper();
 		var compilerResult = new CompilerResult();
-		var signalMessage = ConsoleDisplay.instance.compiler.CompileStringToSignal(message, ref compilerResult);
+		var signalMessage = ConsoleDisplay.Instance.compiler.CompileStringToSignal(message, ref compilerResult);
 		if (compilerResult.compilerResultTag == CompilerResultTag.ERROR) {
 			// TODO: Better error display
+			TMFRSPlugin.Logger.LogError("Compilation error: " + compilerResult.errorMsg);
 			popupBox.PopupWithLabel("Compilation errors: " + compilerResult.errorsCaught);
 			return;
 		}
@@ -323,6 +368,45 @@ public class RelayManagerWindow : InfoWindow
 		RelaySocket.QueueSend(compiledMessage);
 
 		TextDummyManager.Instance_PuzzleInput.Clear();
+	}
+
+	// TODO: Currently can't delete an entry then try remake it
+	private static void CreateNewDictEntry() {
+		if (newSignalIdInput.text.Contains('.')) {
+			popupBox.PopupWithLabel("Signal must be an integer");
+			return;
+		}
+
+		if (newSignalIdInput.text[0] != '-') {
+			popupBox.PopupWithLabel("Signal must be negative");
+			return;
+		}
+
+		string signalIdText = newSignalIdInput.text
+			.Where(c => Char.IsDigit(c))
+			.Join(delimiter: "");
+
+		int signalId = Convert.ToInt32(signalIdText) * -1; // Char.IsDigit strips the '-', so we just add it back in, duh!
+		if (UserDictionary.Instance.terms.ContainsKey(signalId)) {
+			popupBox.PopupWithLabel("Duplicate signal: " + signalId);
+			return;
+		}
+
+		string signalName = newSignalNameInput.text;
+		if (UserDictionary.Instance.keys.ContainsKey(signalName)) {
+			popupBox.PopupWithLabel("Duplicate name: " + signalName);
+			return;
+		}
+
+		bool success = UserDictionary.Instance.AddEntry(signalName, signalId);
+		if (success) {
+			dictionaryWindow.UpdateToAddEntry(signalId, signalName, "?");
+			popupBox.PopupWithLabel("Added signal");
+			autosaver.Autosave(PuzzleManager.Instance);
+		} else {
+			// Should never happen, but just in case, let the user know it didn't work
+			popupBox.PopupWithLabel("Failed to add signal");
+		}
 	}
 
 	private static void SwitchToManager() {

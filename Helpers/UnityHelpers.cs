@@ -15,6 +15,12 @@ public static class UnityHelpers
 			.Single(c => c?.name == name);
 	}
 
+	public static T FindFirstInstanceObject<T>() where T : MonoBehaviour {
+		return Resources.FindObjectsOfTypeAll<Transform>()
+			.Select(t => t.GetComponent<T>())
+			.First(c => c != null);
+	}
+
 	public static void ScaleMeshVertices(Mesh mesh, float xScale = 1f, float yScale = 1f, float zScale = 1f) {
 		var vertices = new Vector3[mesh.vertices.Length];
 		for (int i = 0; i < mesh.vertices.Length; i++) {

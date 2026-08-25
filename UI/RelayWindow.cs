@@ -69,7 +69,7 @@ public class RelayWindow
 
 		relayRoot.SetActive(true);
 
-		var console = ConsoleDisplay.instance;
+		var console = ConsoleDisplay.Instance;
 		console.display.gameObject.SetActive(false);
 		console.readMessageGroup.gameObject.SetActive(false);
 		console.monitorVisual.OnWipe();
@@ -81,7 +81,7 @@ public class RelayWindow
 
 		RelayManagerWindow.Disconnect();
 
-		var console = ConsoleDisplay.instance;
+		var console = ConsoleDisplay.Instance;
 		console.display.gameObject.SetActive(true);
 		console.readMessageGroup.gameObject.SetActive(true);
 		console.monitorVisual.OnWipe();
@@ -107,8 +107,8 @@ public class RelayWindow
 		int[] messageSignals = matches.Groups[3].Value.Split(',').Select(x => int.Parse(x)).ToArray();
 		var signalMessage = new SignalMessage() with { signals = messageSignals };
 
-		// TODO: Make configurable, also only do confetti if -702 is defined
-		if (messageSignals.Contains(-702)) {
+		// TODO: Make configurable
+		if (messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702)) {
 			GameObject.Find("Confetti L (Controller)").GetComponent<ConfettiCannon>().Fire();
 		}
 
