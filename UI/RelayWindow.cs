@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using HarmonyLib;
-using TMFRS.MonoBehaviours;
+using TMFRS.DataStructures;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -13,9 +14,10 @@ namespace TMFRS.UI;
 [HarmonyPatch]
 public class RelayWindow
 {
-	private const int LinesPerPage = 12;
+	private const float LinesPerPage = 12.315f;
 
 	private static GameObject relayRoot;
+	private static GameObject recompileButton;
 	private static TextMeshPro relayOutput;
 	private static ScrollBar3D scrollbar;
 	private static ScrollArea scrollArea;
@@ -23,43 +25,65 @@ public class RelayWindow
 
 	private static float lineHeight;
 	private static float totalDisplayHeight;
+	private static List<RelayMessage> receivedMessages = new List<RelayMessage>();
 
 	[HarmonyPatch(typeof(ConsoleDisplay), "Awake")]
 	[HarmonyPostfix]
 	public static void Init(ConsoleDisplay __instance) {
 		relayRoot = new GameObject("Relay Output");
-		relayRoot.SetActive(false);
 
 		calculatorWindow = GameObject.Find("Calculator Window").GetComponent<CalculatorWindow>();
 
 		var topBar = GameObject.Instantiate(__instance.readMessageGroup);
+		topBar.name = "Relay Top Bar";
 		topBar.transform.SetParent(relayRoot.transform);
 		topBar.transform.position = new Vector3(-27.75f, 5f, -0.005f);
-		topBar.name = "Relay Top Bar";
 		topBar.GetComponentInChildren<TextMeshPro>().text = "Relay";
+		GameObject.Destroy(topBar.transform.Find("Line Numbers").gameObject);
 
 		var logoutButton = topBar.transform.Find("Respond Button");
+		logoutButton.name = "Logout Button";
+		logoutButton.transform.position = new Vector3(-27.05f, 5.675f, 0.257f);
 		logoutButton.GetComponentInChildren<TextMeshPro>().text = "Logout";
 		logoutButton.GetComponentInChildren<Button3D>().OnUseButton = new UnityEvent();
 		logoutButton.GetComponentInChildren<Button3D>().OnUseButton.AddListener(LogOut);
+		GameObject.Destroy(logoutButton.transform.Find("Icon").gameObject);
+		UnityHelpers.ScaleMeshVertices(logoutButton.GetComponent<MeshFilter>().mesh, 0.7f);
+		logoutButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.3f;
+		logoutButton.GetComponentInChildren<TextMeshPro>().transform.position += Vector3.right * 0.0365f;
 
-		var relayOutputObj = GameObject.Instantiate(GameObject.Find("Output Display"));
-		relayOutputObj.transform.SetParent(relayRoot.transform);
-		relayOutputObj.transform.position = new Vector3(-27.9f, 5.55f, 0.22f);
+		recompileButton = topBar.transform.GetChild(2).gameObject;
+		recompileButton.name = "Recompile Button";
+		recompileButton.transform.position = new Vector3(-27.95f, 5.675f, 0.257f);
+		recompileButton.GetComponentInChildren<TextMeshPro>().text = "Recompile";
+		recompileButton.GetComponentInChildren<Button3D>().OnUseButton = new UnityEvent();
+		recompileButton.GetComponentInChildren<Button3D>().OnUseButton.AddListener(Recompile);
+		GameObject.Destroy(recompileButton.transform.Find("Icon").gameObject);
+		UnityHelpers.ScaleMeshVertices(recompileButton.GetComponent<MeshFilter>().mesh, 0.85f);
+		recompileButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.15f;
+		recompileButton.GetComponentInChildren<TextMeshPro>().transform.position += Vector3.right * 0.0439f;
+		recompileButton.gameObject.SetActive(false);
+
+		var relayOutputObj = topBar.transform.Find("Output Display");
 		relayOutputObj.name = "Relay Output Signals";
 		relayOutput = relayOutputObj.GetComponent<TextMeshPro>();
 		relayOutput.fontSize = 0.9f;
+		relayOutput.maxVisibleLines = 0;
+		relayOutput.maxVisibleCharacters = 0;
 
 		scrollbar = topBar.GetComponentInChildren<ScrollBar3D>();
+		scrollbar.name = "Scroll Handle Fucked";
+		scrollbar.transform.position += Vector3.right * 0.5f; // Hiding scrollbar because I couldn't get it to function properly, sad!
 		scrollbar.visuals = scrollbar.transform.Find("Scroll Visuals").gameObject;
 		scrollbar.col = scrollbar.GetComponent<BoxCollider>();
 		scrollbar.meshRenderer = scrollbar.GetComponentInChildren<MeshRenderer>();
 		scrollArea = relayOutput.GetComponent<ScrollArea>();
-		scrollArea.initialConfigure = false;
 		scrollbar.scrollArea = scrollArea.gameObject;
 
 		totalDisplayHeight = relayOutput.rectTransform.sizeDelta.y;
 		lineHeight = totalDisplayHeight / LinesPerPage;
+
+		relayRoot.SetActive(false);
 	}
 
 	public static void TryShow() {
@@ -77,7 +101,11 @@ public class RelayWindow
 
 	public static void LogOut() {
 		relayRoot.SetActive(false);
+		recompileButton.SetActive(false);
 		relayOutput.text = "";
+		relayOutput.maxVisibleLines = 0;
+		relayOutput.maxVisibleCharacters = 0;
+		receivedMessages = new List<RelayMessage>();
 
 		RelayManagerWindow.Disconnect();
 
@@ -87,34 +115,11 @@ public class RelayWindow
 		console.monitorVisual.OnWipe();
 	}
 
-	public static void PrintText(string text) {
-		char messageType = text[0];
-
-		if (messageType == 'C') {
-			// Syncing active clients, don't care about this
-			return;
-		}
-
-		if (messageType != 'R') {
-			return;
-		}
-
-		var messageRegex = new Regex(@"^R,([\d]+),([\d]+),(.*)$");
-		var matches = messageRegex.Match(text);
-		string sender = matches.Groups[1].Value;
-		string messageNumber = matches.Groups[2].Value;
-
-		int[] messageSignals = matches.Groups[3].Value.Split(',').Select(x => int.Parse(x)).ToArray();
-		var signalMessage = new SignalMessage() with { signals = messageSignals };
-
-		// TODO: Make configurable
-		if (messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702)) {
-			GameObject.Find("Confetti L (Controller)").GetComponent<ConfettiCannon>().Fire();
-		}
-
-		var compileResult = new CompilerResult();
+	private static string CompileSignalsToString(SignalMessage signalMessage, out CompilerResult compileResult) {
+		compileResult = new CompilerResult();
 		var compiler = ConsoleDisplay.Instance.compiler;
 		var compiledMessage = compiler.CompileSignalToString(signalMessage, ref compileResult);
+
 		string compiledOutput = "";
 		for (int i = 0; i < compiledMessage.Count; i++) {
 			if (i == compiledMessage.Count - 1) {
@@ -125,24 +130,106 @@ public class RelayWindow
 			}
 		}
 
-		var senderBase10 = int.Parse(sender);
-		var senderBase8 = calculatorWindow.EuclideanBaseChange(senderBase10, 10, 8);
-		relayOutput.text += $"{senderBase8}:{messageNumber}\n{compiledOutput}\n\n";
+		return compiledOutput;
+	}
+	
+	private static void Recompile() {
+		relayOutput.text = "";
+		relayOutput.maxVisibleLines = 0;
+		relayOutput.maxVisibleCharacters = 0;
 
-		// TODO: Scroll bar doesn't work until another message is sent, odd
-		relayOutput.StartCoroutine(SetupScrollbar(compiledMessage.Count));
+		string text = "";
+		foreach (var message in receivedMessages) {
+			string compiledOutput = CompileSignalsToString(message.Signals, out _);
+			text += $"{message.Sender}:{message.TransmissionId}\n{compiledOutput}\n\n";
+		}
+
+		relayOutput.StartCoroutine(PrintTextRoutine(text, false, true));
 	}
 
-	private static IEnumerator SetupScrollbar(int count) {
+	public static void PrintText(string text, bool byChar, bool instant) {
+		if (text[0] != 'R') {
+			return;
+		}
+
+		if (TMFRSPlugin.RelayTypingDelay.Value <= 0f) {
+			instant = true;
+		}
+
+		// TODO: After making goodcallsign/badcallsign events, need this to be there
+		if (!recompileButton.activeSelf) {
+			recompileButton.SetActive(true);
+		}
+
+		var messageRegex = new Regex(@"^R,([\d]+),([\d]+),(.*)$");
+		var matches = messageRegex.Match(text);
+		string sender = matches.Groups[1].Value;
+		string messageNumber = matches.Groups[2].Value;
+
+		int[] messageSignals = matches.Groups[3].Value.Split(',').Select(x => int.Parse(x)).ToArray();
+		var signalMessage = new SignalMessage() with { signals = messageSignals };
+
+		if (messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702) && TMFRSPlugin.PlayConfetti.Value) {
+			GameObject.Find("Confetti L (Controller)").GetComponent<ConfettiCannon>().Fire();
+		}
+
+		var compiledOutput = CompileSignalsToString(signalMessage, out var compileResult);
+
+		var senderBase10 = int.Parse(sender);
+		var senderBase8 = calculatorWindow.EuclideanBaseChange(senderBase10, 10, 8);
+		string message =  $"{senderBase8}:{messageNumber}\n{compiledOutput}\n\n";
+		receivedMessages.Add(new RelayMessage() { 
+			Sender = short.Parse(senderBase8),
+			TransmissionId = short.Parse(messageNumber),
+			Signals = signalMessage,
+		});
+
+		relayOutput.StartCoroutine(PrintTextRoutine(message, byChar, instant));
+	}
+
+	private static IEnumerator PrintTextRoutine(string text, bool byChar, bool instant) {
+		relayOutput.text += text;
+
+		yield return relayOutput.StartCoroutine(SetupScrollbar());
+
+		int fullLineCount = relayOutput.textInfo.lineCount;
+		int fullCharCount = relayOutput.textInfo.characterCount;
+
+		if (byChar) {
+			relayOutput.maxVisibleLines = fullLineCount;
+			for (int i = relayOutput.maxVisibleCharacters; i < fullCharCount; i++) {
+				relayOutput.maxVisibleCharacters = i;
+				SFXPlayer.instance.PlayMonitorTypeBlip();
+				if (!instant) {
+					yield return new WaitForSeconds(TMFRSPlugin.RelayTypingDelay.Value);
+				}
+			}
+		} else {
+			relayOutput.maxVisibleCharacters = fullCharCount;
+			for (int i = relayOutput.maxVisibleLines; i < fullLineCount; i++) {
+				relayOutput.maxVisibleLines = i;
+				SFXPlayer.instance.PlayMonitorTypeBlip();
+				if (!instant) {
+					yield return new WaitForSeconds(TMFRSPlugin.RelayTypingDelay.Value);
+				}
+			}
+		}
+
+		yield return relayOutput.StartCoroutine(SetupScrollbar());
+	}
+
+	private static IEnumerator SetupScrollbar() {
 		yield return null;
 
-		float num = (relayOutput.textInfo.lineCount + 1) * lineHeight;
-		float relativeMenuHeight = num / totalDisplayHeight;
+		float totalLineHeight = (relayOutput.textInfo.lineCount + 1) * lineHeight;
+		float relativeMenuHeight = totalLineHeight / totalDisplayHeight;
 		bool scrollToBottom = scrollbar.NormalizedScroll <= 0.01f;
-		scrollbar.ConfigureHeight(relativeMenuHeight, true);
+
+		scrollbar.ConfigureHeight(relativeMenuHeight, false);
+		scrollArea.Configure(scrollbar, lineHeight + totalLineHeight, totalDisplayHeight);
+
 		if (scrollToBottom) {
 			scrollbar.ForceScrollTo(0f);
 		}
-		scrollArea.Configure(scrollbar, lineHeight + num, totalDisplayHeight);
 	}
 }

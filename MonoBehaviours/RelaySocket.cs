@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -16,6 +18,8 @@ public class RelaySocket : MonoBehaviour
 	private static ClientWebSocket socket;
 	private static CancellationTokenSource cancellationToken;
 	private static Encoding ASCII => Encoding.ASCII;
+	private static Queue<string> receivedMessages = new Queue<string>();
+	private static Coroutine showMessages;
 
 	public static string? Callsign = null;
 	public static bool UpdateCallsign = false;
@@ -26,8 +30,7 @@ public class RelaySocket : MonoBehaviour
 		socket = new ClientWebSocket();
 
 		try {
-			// TODO: Configurable source
-			var goodCallsign = await TryConnect(socket, new Uri("wss://dscr-relay.dixonary.co.uk"), cancellationToken.Token);
+			var goodCallsign = await TryConnect(socket, new Uri(TMFRSPlugin.RelaySource.Value), cancellationToken.Token);
 			if (!goodCallsign) {
 				RelayManagerWindow.BadCallsign();
 				Disconnect();
@@ -46,6 +49,17 @@ public class RelaySocket : MonoBehaviour
 		catch (Exception ex) {
 			TMFRSPlugin.Logger.LogError(ex);
 		}
+	}
+
+	private void Update() {
+		int totalCharCount = receivedMessages.Sum(x => x.Length);
+		while (receivedMessages.Count > 0) {
+			RelayWindow.PrintText(receivedMessages.Dequeue(), totalCharCount < TMFRSPlugin.RelayTypeCharByCharCutoff.Value, totalCharCount > TMFRSPlugin.RelayTypeLineByLineCutoff.Value);
+		}
+	}
+
+	private IEnumerator ShowMessages() {
+		yield return new WaitForSeconds(0.1f);
 	}
 
 	public void Disconnect() {
@@ -73,7 +87,6 @@ public class RelaySocket : MonoBehaviour
 			var result = await socket.ReceiveAsync(view, token);
 			if (result.MessageType == WebSocketMessageType.Close) {
 				await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token);
-				TMFRSPlugin.Logger.LogInfo("Socket closed");
 				return;
 			}
 
@@ -84,7 +97,7 @@ public class RelaySocket : MonoBehaviour
 			} else if (text[0] == 'U') {
 				RelayManagerWindow.BadCallsign();
 			} else {
-				RelayWindow.PrintText(text);
+				receivedMessages.Enqueue(text);
 			}
 
 			Array.Fill<byte>(buffer, 0, 0, result.Count);

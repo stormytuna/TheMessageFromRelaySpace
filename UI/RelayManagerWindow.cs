@@ -18,6 +18,7 @@ public class RelayManagerWindow : InfoWindow
 	private static bool initRelayButton = false;
 	private static bool initInfoDisplay = false;
 	private static bool reinitDict = false;
+	private static int currCallsignBase8;
 
 	private static GameObject relayManagerViewport;
 	private static GameObject relayInputViewport;
@@ -33,6 +34,7 @@ public class RelayManagerWindow : InfoWindow
 	private static PopupBox popupBox;
 	private static Autosaver autosaver;
 	private static DictionaryWindow dictionaryWindow;
+	private static PuzzleCounter puzzleCounter;
 
 
 	[HarmonyPatch(typeof(TabsWindow), "Open")]
@@ -109,10 +111,10 @@ public class RelayManagerWindow : InfoWindow
 
 		InitManagerViewport();
 		InitInputViewport();
-		InitRightMonitorTopBar();
 
 		autosaver = UnityHelpers.FindSingleInstanceObject<Autosaver>();
 		dictionaryWindow = UnityHelpers.FindSingleInstanceObject<DictionaryWindow>();
+		puzzleCounter = UnityHelpers.FindSingleInstanceObject<PuzzleCounter>();
 	}
 
 	private void InitManagerViewport() {
@@ -124,11 +126,9 @@ public class RelayManagerWindow : InfoWindow
 		var callsignLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
 		callsignLabel.name = "Callsign Label";
 		callsignLabel.transform.SetParent(relayManagerViewport.transform);
-
 		var rectTransform = callsignLabel.GetComponent<RectTransform>();
 		rectTransform.anchoredPosition = Vector2.zero;
 		rectTransform.position = new Vector3(-30.3f, 5.45f, 0f);
-
 		var text = callsignLabel.GetComponent<TextMeshPro>();
 		text.text = "Callsign (base 8):";
 		text.textWrappingMode = TextWrappingModes.NoWrap;
@@ -179,6 +179,39 @@ public class RelayManagerWindow : InfoWindow
 		var switchToInputText = switchToInputButton.transform.Find("Text");
 		switchToInputText.position += Vector3.right * 0.0325f;
 
+		var newSignalsLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		newSignalsLabel.name = "New Signals Label";
+		newSignalsLabel.transform.SetParent(relayManagerViewport.transform);
+		rectTransform = newSignalsLabel.GetComponent<RectTransform>();
+		rectTransform.anchoredPosition = Vector2.zero;
+		rectTransform.position = new Vector3(-30.3f, 5.25f, 0f);
+		text = newSignalsLabel.GetComponent<TextMeshPro>();
+		text.text = "Add new signals:";
+		text.textWrappingMode = TextWrappingModes.NoWrap;
+		text.overflowMode = TextOverflowModes.Overflow;
+
+		var signalIdLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		signalIdLabel.name = "Signal ID Label";
+		signalIdLabel.transform.SetParent(relayManagerViewport.transform);
+		rectTransform = signalIdLabel.GetComponent<RectTransform>();
+		rectTransform.anchoredPosition = Vector2.zero;
+		rectTransform.position = new Vector3(-30.3f, 5.15f, 0f);
+		text = signalIdLabel.GetComponent<TextMeshPro>();
+		text.text = "ID";
+		text.textWrappingMode = TextWrappingModes.NoWrap;
+		text.overflowMode = TextOverflowModes.Overflow;
+
+		var signalNameLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		signalNameLabel.name = "Signal Name Label";
+		signalNameLabel.transform.SetParent(relayManagerViewport.transform);
+		rectTransform = signalNameLabel.GetComponent<RectTransform>();
+		rectTransform.anchoredPosition = Vector2.zero;
+		rectTransform.position = new Vector3(-29.63f, 5.15f, 0f);
+		text = signalNameLabel.GetComponent<TextMeshPro>();
+		text.text = "Name";
+		text.textWrappingMode = TextWrappingModes.NoWrap;
+		text.overflowMode = TextOverflowModes.Overflow;
+
 		var exampleDictEntry = calculatorWindow.viewport.GetComponentsInChildren<SimpleWriter>(true)
 			.First(x => x.name == "Name Input");
 		
@@ -187,10 +220,11 @@ public class RelayManagerWindow : InfoWindow
 		newSignalId.transform.SetParent(relayManagerViewport.transform);
 		newSignalId.transform.position = new Vector3(-30.755f, 5.1f, 0.22f);
 		UnityHelpers.ScaleMeshVertices(newSignalId.GetComponent<MeshFilter>().mesh, 0.3f, 0.6f);
+		newSignalId.GetComponent<BoxCollider>().size -= Vector3.right * 0.4f;
 
 		// TODO: Lock signal text to be `-XXXXXX`
 		newSignalIdInput = newSignalId.GetComponentInChildren<TextMeshPro>();
-		newSignalIdInput.text = "-999999";
+		newSignalIdInput.text = "-";
 		newSignalIdInput.transform.localPosition = new Vector3(0.3503f, -0.2237f, -0.59f);
 
 		var newSignalName = GameObject.Instantiate(calculatorWindow.operand1.gameObject);
@@ -198,10 +232,11 @@ public class RelayManagerWindow : InfoWindow
 		newSignalName.transform.SetParent(relayManagerViewport.transform);
 		newSignalName.transform.position = new Vector3(-29.95f, 5.1f, 0.22f);
 		UnityHelpers.ScaleMeshVertices(newSignalName.GetComponent<MeshFilter>().mesh, 0.5f, 0.6f);
+		newSignalName.GetComponent<BoxCollider>().size -= Vector3.right * 0.4f;
 		newSignalName.transform.GetComponent<SimpleWriter>().dummyType = InputDummyType.TermName;
 
 		newSignalNameInput = newSignalName.GetComponentInChildren<TextMeshPro>();
-		newSignalNameInput.text = "MYCOOLSIGNAL";
+		newSignalNameInput.text = "";
 		newSignalNameInput.transform.localPosition = new Vector3(0.25f, -0.2237f, -0.59f);
 
 		var makeNewSignalButton = GameObject.Instantiate(exampleButton);
@@ -256,15 +291,6 @@ public class RelayManagerWindow : InfoWindow
 		managerText.position += Vector3.right * 0.0355f;
 	}
 
-	// TODO: Should this even be here..?
-	private void InitRightMonitorTopBar() {
-		var topBar = GameObject.Instantiate(relayManagerViewport.transform.Find("Top Tab"));
-		topBar.name = "Top Tab Right";
-		topBar.GetComponentInChildren<TextMeshPro>().text = "Relay";
-		GameObject.Destroy(topBar.GetComponentInChildren<Button3D>().gameObject); // TODO: Probably has many more objects attached that go unused, they need to be removed
-
-		// TODO: Recompile button
-	}
 
 	[HarmonyPatch(typeof(WorldSpaceClicker), "ScanForHitbox")]
 	[HarmonyPostfix]
@@ -313,9 +339,12 @@ public class RelayManagerWindow : InfoWindow
 
 		if (relaySocket == null) {
 			RelaySocket.Callsign = callsignBase10;
+			currCallsignBase8 = callsignBase8;
+
 			var socketObj = new GameObject("Relay Socket");
 			socketObj.AddComponent<RelaySocket>();
 			relaySocket = socketObj.GetComponent<RelaySocket>();
+
 			return;
 		}
 
@@ -329,6 +358,7 @@ public class RelayManagerWindow : InfoWindow
 		SwitchToInput();
 		switchToInputButton.SetActive(true);
 		popupBox.PopupWithLabel("Callsign set to " + callsignInput.label.text);
+		puzzleCounter.StartCoroutine(puzzleCounter.UpdateCounterRoutine(currCallsignBase8, 0f));
 	}
 
 	public static void BadCallsign() {
@@ -342,6 +372,7 @@ public class RelayManagerWindow : InfoWindow
 			return;
 		}
 
+		puzzleCounter.StartCoroutine(puzzleCounter.UpdateCounterRoutine(PuzzleManager.Instance.TotalPuzzleID + 1, 0f));
 		switchToInputButton.SetActive(false);
 		RelayManagerWindow.relaySocket.Disconnect();
 		GameObject.Destroy(RelayManagerWindow.relaySocket);
@@ -392,7 +423,7 @@ public class RelayManagerWindow : InfoWindow
 			return;
 		}
 
-		string signalName = newSignalNameInput.text;
+		string signalName = newSignalNameInput.text.Trim(' ').Trim('\u200b');
 		if (UserDictionary.Instance.keys.ContainsKey(signalName)) {
 			popupBox.PopupWithLabel("Duplicate name: " + signalName);
 			return;
@@ -402,6 +433,8 @@ public class RelayManagerWindow : InfoWindow
 		if (success) {
 			dictionaryWindow.UpdateToAddEntry(signalId, signalName, "?");
 			popupBox.PopupWithLabel("Added signal");
+			newSignalIdInput.text = "-";
+			newSignalNameInput.text = "";
 			autosaver.Autosave(PuzzleManager.Instance);
 		} else {
 			// Should never happen, but just in case, let the user know it didn't work
