@@ -9,13 +9,14 @@ namespace TMFRS;
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class TMFRSPlugin : BaseUnityPlugin
 {
-	public static ConfigEntry<string> RelaySource;
 	public static ConfigEntry<ColorSetType> ConfigTheme;
+	public static ConfigEntry<bool> DictionaryDynamicBudge;
 	public static ConfigEntry<bool> PlayConfetti;
 	public static ConfigEntry<bool> MulticoloredConfetti;
 	public static ConfigEntry<float> RelayTypingDelay;
 	public static ConfigEntry<int> RelayTypeCharByCharCutoff;
 	public static ConfigEntry<int> RelayTypeLineByLineCutoff;
+	public static ConfigEntry<string> RelaySource;
 
 	internal static new ManualLogSource Logger;
 
@@ -35,6 +36,10 @@ public class TMFRSPlugin : BaseUnityPlugin
 		string key = "Colors";
 		string description = "The theme the monitor uses.\nVisual = Pink, Brown, Red\nAtoms = Blue\nSpace = Purple\nLife = Yellow, Green\nAbstractDust = Yellow, Red\nVitality = Pink, Red\nPlanet = Cyan\nComplexCulture = Orange, Purple\nKnowledge = White\nRetroGreen = Green\nRandom = Picks a random theme each time you load the game";
 		ConfigTheme = Config.Bind(section, key, ColorSetType.None, description);
+
+		key = "DictionaryLayoutDynamicWidth";
+		description = "Whether to budge dictionary labels over by a dynamic amount or a fixed amount.\nTrue for dynamic amount, depends on signal length\nFalse for fixed amount of 2";
+		DictionaryDynamicBudge = Config.Bind(section, key, true, description);
 
 		section = "Confetti";
 		key = "Confetti";
@@ -56,7 +61,7 @@ public class TMFRSPlugin : BaseUnityPlugin
 
 		key = "RelayTypeLineByLineCutoff";
 		description = "The amount of characters a message must be under to be typed line-by-line. Messages with a length longer than this are types instantly. Does nothing if you set RelayTypingDelay to 0";
-		RelayTypeLineByLineCutoff = Config.Bind(section, key, 64, description);
+		RelayTypeLineByLineCutoff = Config.Bind(section, key, 128, description);
 
 		section = "Relay";
 		key = "RelaySource";
