@@ -17,6 +17,8 @@ public class TRFDSPlugin : BaseUnityPlugin
 	public static ConfigEntry<float> RelayTypingDelay;
 	public static ConfigEntry<int> RelayTypeCharByCharCutoff;
 	public static ConfigEntry<int> RelayTypeLineByLineCutoff;
+	public static ConfigEntry<bool> ShowInitialMessagesInstantly;
+	public static ConfigEntry<bool> ShortenVisuals;
 	public static ConfigEntry<string> RelaySource;
 
 	internal static new ManualLogSource Logger;
@@ -73,8 +75,16 @@ public class TRFDSPlugin : BaseUnityPlugin
 		RelayTypeLineByLineCutoff = Config.Bind(section, key, 128, description);
 
 		section = "Relay";
+		key = "ShowInitialMessagesInstantly";
+		description = "Whether to skip typing out the 10 messages that get sent when you initially connect to the Relay. If this is set to false, they are typed out line-by-line, regardless of cutoff settings";
+		ShowInitialMessagesInstantly = Config.Bind(section, key, true, description);
+
+		key = "ShortenVisuals";
+		description = "Whether to shorten Relay messages that have visuals in them so they are easier to scroll past";
+		ShortenVisuals = Config.Bind(section, key, true, description);
+
 		key = "RelaySource";
-		description = "The web socket source to pull Relay messages from.";
+		description = "The web socket source to pull Relay messages from";
 		RelaySource = Config.Bind(section, key, "wss://dscr-relay.dixonary.co.uk", description);
 	}
 }

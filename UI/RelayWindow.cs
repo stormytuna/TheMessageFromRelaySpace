@@ -130,6 +130,17 @@ public class RelayWindow
 	private static string CompileSignalsToString(SignalMessage signalMessage, out CompilerResult compileResult) {
 		compileResult = new CompilerResult();
 		var compiler = ConsoleDisplay.Instance.compiler;
+
+		if (TRFDSPlugin.ShortenVisuals.Value) {
+			for (int i = 0; i < signalMessage.signals.Length; i++) {
+				if (signalMessage.signals[i] == -53 && signalMessage.signals[i + 1] == -14) {
+					var newSignals = signalMessage.signals.Take(i + 2).Concat([-25, -15]);
+					signalMessage.signals = newSignals.ToArray();
+					break;
+				}
+			}
+		}
+
 		var compiledMessage = compiler.CompileSignalToString(signalMessage, ref compileResult);
 
 		string compiledOutput = "";
@@ -144,6 +155,11 @@ public class RelayWindow
 
 		return compiledOutput;
 	}
+
+	private static string GetPlaintextMessage(short sender, short transmissionId, string text) {
+		string leadingNewlines = receivedMessages.Count <= 1 ? "" : "\n\n";
+		return $"{leadingNewlines}{sender}:{transmissionId}\n{text}";
+	}
 	
 	private static void Recompile() {
 		relayOutput.text = "";
@@ -153,7 +169,7 @@ public class RelayWindow
 		string text = "";
 		foreach (var message in receivedMessages) {
 			string compiledOutput = CompileSignalsToString(message.Signals, out _);
-			text += $"{message.Sender}:{message.TransmissionId}\n{compiledOutput}\n\n";
+			text += GetPlaintextMessage(message.Sender, message.TransmissionId, compiledOutput);
 		}
 
 		relayOutput.StartCoroutine(PrintTextRoutine(text, false, true));
@@ -169,9 +185,12 @@ public class RelayWindow
 		}
 
 		// Relay sends the last 10 messages before you connected, so these should print quickly
-		bool initialMessages = receivedMessages.Count < 10;
-		if (initialMessages) {
+		bool isInitialMessage = receivedMessages.Count < 10;
+		if (isInitialMessage) {
 			byChar = false;
+			if (TRFDSPlugin.ShowInitialMessagesInstantly.Value) {
+				instant = true;
+			}
 		}
 
 		var messageRegex = new Regex(@"^R,([\d]+),([\d]+),(.*)$");
@@ -182,7 +201,7 @@ public class RelayWindow
 		int[] messageSignals = matches.Groups[3].Value.Split(',').Select(x => int.Parse(x)).ToArray();
 		var signalMessage = new SignalMessage() with { signals = messageSignals };
 
-		if (!initialMessages && TRFDSPlugin.PlayConfetti.Value && messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702)) {
+		if (!isInitialMessage && TRFDSPlugin.PlayConfetti.Value && messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702)) {
 			GameObject.Find("Confetti L (Controller)").GetComponent<ConfettiCannon>().Fire();
 		}
 
@@ -190,13 +209,16 @@ public class RelayWindow
 
 		var senderBase10 = int.Parse(sender);
 		var senderBase8 = calculatorWindow.EuclideanBaseChange(senderBase10, 10, 8);
-		string message =  $"{senderBase8}:{messageNumber}\n{compiledOutput}\n\n";
-		receivedMessages.Add(new RelayMessage() { 
+
+		var relayMessage = new RelayMessage() {
 			Sender = short.Parse(senderBase8),
 			TransmissionId = short.Parse(messageNumber),
 			Signals = signalMessage,
-		});
+		};
 
+		receivedMessages.Add(relayMessage);
+
+		string message = GetPlaintextMessage(relayMessage.Sender, relayMessage.TransmissionId, compiledOutput);
 		relayOutput.StartCoroutine(PrintTextRoutine(message, byChar, instant));
 
 		if (TRFDSPlugin.Oscilloscopes.Value) {
@@ -231,6 +253,9 @@ public class RelayWindow
 				}
 			}
 		}
+
+		relayOutput.maxVisibleLines = fullLineCount;
+		relayOutput.maxVisibleCharacters = fullCharCount;
 
 		yield return relayOutput.StartCoroutine(SetupScrollbar());
 	}
