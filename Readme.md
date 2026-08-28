@@ -15,6 +15,6 @@ Install [BepInEx](https://docs.bepinex.dev/articles/user_guide/installation/inde
 - Run the game once to setup BepInEx. After you close the game, you should see BepInEx has created a folder, `%GAMEROOT%/BepInEx/Plugins`
 
 Install the mod:
-- Download `TMFRS.dll` from the [releases](https://github.com/stormytuna/TheRelayFromDeepSpace/releases/latest)
+- Download `TRFDS.dll` from the [releases](https://github.com/stormytuna/TheRelayFromDeepSpace/releases/latest)
 - Place the file in the `%GAMEROOT%/BepInEx/Plugins` folder
 - Run the game
