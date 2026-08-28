@@ -12,6 +12,7 @@ public class TMFRSPlugin : BaseUnityPlugin
 	public static ConfigEntry<string> RelaySource;
 	public static ConfigEntry<ColorSetType> ConfigTheme;
 	public static ConfigEntry<bool> PlayConfetti;
+	public static ConfigEntry<bool> MulticoloredConfetti;
 	public static ConfigEntry<float> RelayTypingDelay;
 	public static ConfigEntry<int> RelayTypeCharByCharCutoff;
 	public static ConfigEntry<int> RelayTypeLineByLineCutoff;
@@ -35,9 +36,14 @@ public class TMFRSPlugin : BaseUnityPlugin
 		string description = "The theme the monitor uses.\nVisual = Pink, Brown, Red\nAtoms = Blue\nSpace = Purple\nLife = Yellow, Green\nAbstractDust = Yellow, Red\nVitality = Pink, Red\nPlanet = Cyan\nComplexCulture = Orange, Purple\nKnowledge = White\nRetroGreen = Green\nRandom = Picks a random theme each time you load the game";
 		ConfigTheme = Config.Bind(section, key, ColorSetType.None, description);
 
+		section = "Confetti";
 		key = "Confetti";
 		description = "Whether the confetti cannon should be allowed to play when a specific frequency is sent. The frequency must also be defined in your dictionary.";
 		PlayConfetti = Config.Bind(section, key, true, description);
+
+		key = "MulticoloredConfetti";
+		description = "Whether the confetti should be multicolored or greyscale.";
+		MulticoloredConfetti = Config.Bind(section, key, true, description);
 
 		section = "Typing";
 		key = "RelayTypingDelay";
@@ -46,11 +52,11 @@ public class TMFRSPlugin : BaseUnityPlugin
 
 		key = "RelayTypeCharByCharCutoff";
 		description = "The amount of characters a message must be under to be typed character-by-character. Messages with a length longer than this are types either line-by-line or instantly. Does nothing if you set RelayTypingDelay to 0";
-		RelayTypeCharByCharCutoff = Config.Bind(section, key, 128, description);
+		RelayTypeCharByCharCutoff = Config.Bind(section, key, 32, description);
 
 		key = "RelayTypeLineByLineCutoff";
 		description = "The amount of characters a message must be under to be typed line-by-line. Messages with a length longer than this are types instantly. Does nothing if you set RelayTypingDelay to 0";
-		RelayTypeLineByLineCutoff = Config.Bind(section, key, 512, description);
+		RelayTypeLineByLineCutoff = Config.Bind(section, key, 64, description);
 
 		section = "Relay";
 		key = "RelaySource";

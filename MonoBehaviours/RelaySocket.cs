@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TMFRS.UI;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace TMFRS.MonoBehaviours;
 
@@ -15,15 +16,17 @@ namespace TMFRS.MonoBehaviours;
 
 public class RelaySocket : MonoBehaviour
 {
+	public static UnityEvent<bool> CallsignProcessed = new();
+
+	public static string? Callsign = null;
+	public static bool UpdateCallsign = false;
+	public static Queue<string> EnqueuedMessages = new Queue<string>();
+
 	private static ClientWebSocket socket;
 	private static CancellationTokenSource cancellationToken;
 	private static Encoding ASCII => Encoding.ASCII;
 	private static Queue<string> receivedMessages = new Queue<string>();
 	private static Coroutine showMessages;
-
-	public static string? Callsign = null;
-	public static bool UpdateCallsign = false;
-	public static Queue<string> EnqueuedMessages = new Queue<string>();
 
 	private async void Start() {
 		cancellationToken = new CancellationTokenSource();
@@ -32,11 +35,11 @@ public class RelaySocket : MonoBehaviour
 		try {
 			var goodCallsign = await TryConnect(socket, new Uri(TMFRSPlugin.RelaySource.Value), cancellationToken.Token);
 			if (!goodCallsign) {
-				RelayManagerWindow.BadCallsign();
+				CallsignProcessed.Invoke(false);
 				Disconnect();
 				return;
 			} else {
-				RelayManagerWindow.GoodCallsign();
+				CallsignProcessed.Invoke(true);
 			}
 
 			Task.Run(() => RelaySocket.Receive(socket, cancellationToken.Token));
@@ -52,10 +55,12 @@ public class RelaySocket : MonoBehaviour
 	}
 
 	private void Update() {
-		int totalCharCount = receivedMessages.Sum(x => x.Length);
-		while (receivedMessages.Count > 0) {
-			RelayWindow.PrintText(receivedMessages.Dequeue(), totalCharCount < TMFRSPlugin.RelayTypeCharByCharCutoff.Value, totalCharCount > TMFRSPlugin.RelayTypeLineByLineCutoff.Value);
+		if (receivedMessages.Count <= 0) {
+			return;
 		}
+
+		var nextMessage = receivedMessages.Dequeue();
+		RelayWindow.PrintText(nextMessage, nextMessage.Length < TMFRSPlugin.RelayTypeCharByCharCutoff.Value, nextMessage.Length >= TMFRSPlugin.RelayTypeLineByLineCutoff.Value);
 	}
 
 	private IEnumerator ShowMessages() {
@@ -93,9 +98,9 @@ public class RelaySocket : MonoBehaviour
 			var text = ASCII.GetString(buffer[0..result.Count]);
 
 			if (text[0] == 'K') {
-				RelayManagerWindow.GoodCallsign();
+				CallsignProcessed.Invoke(true);
 			} else if (text[0] == 'U') {
-				RelayManagerWindow.BadCallsign();
+				CallsignProcessed.Invoke(true);
 			} else {
 				receivedMessages.Enqueue(text);
 			}

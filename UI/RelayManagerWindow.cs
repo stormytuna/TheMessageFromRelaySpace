@@ -115,6 +115,14 @@ public class RelayManagerWindow : InfoWindow
 		autosaver = UnityHelpers.FindSingleInstanceObject<Autosaver>();
 		dictionaryWindow = UnityHelpers.FindSingleInstanceObject<DictionaryWindow>();
 		puzzleCounter = UnityHelpers.FindSingleInstanceObject<PuzzleCounter>();
+
+		RelaySocket.CallsignProcessed.AddListener((goodCallsign) => {
+			if (goodCallsign) {
+				GoodCallsign();
+			} else {
+				BadCallsign();
+			}
+		});
 	}
 
 	private void InitManagerViewport() {
@@ -352,8 +360,6 @@ public class RelayManagerWindow : InfoWindow
 		RelaySocket.UpdateCallsign = true;
 	}
 
-	// Called by RelaySocket
-	// TODO: Perchance rewrite these to use events
 	public static void GoodCallsign() {
 		SwitchToInput();
 		switchToInputButton.SetActive(true);

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using HarmonyLib;
 using TMFRS.DataStructures;
+using TMFRS.MonoBehaviours;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -83,6 +84,12 @@ public class RelayWindow
 		totalDisplayHeight = relayOutput.rectTransform.sizeDelta.y;
 		lineHeight = totalDisplayHeight / LinesPerPage;
 
+		RelaySocket.CallsignProcessed.AddListener((goodCallsign) => {
+			if (goodCallsign) {
+				recompileButton.SetActive(true);
+			}
+		});
+
 		relayRoot.SetActive(false);
 	}
 
@@ -156,9 +163,10 @@ public class RelayWindow
 			instant = true;
 		}
 
-		// TODO: After making goodcallsign/badcallsign events, need this to be there
-		if (!recompileButton.activeSelf) {
-			recompileButton.SetActive(true);
+		// Relay sends the last 10 messages before you connected, so these should print quickly
+		bool initialMessages = receivedMessages.Count < 10;
+		if (initialMessages) {
+			byChar = false;
 		}
 
 		var messageRegex = new Regex(@"^R,([\d]+),([\d]+),(.*)$");
@@ -169,7 +177,7 @@ public class RelayWindow
 		int[] messageSignals = matches.Groups[3].Value.Split(',').Select(x => int.Parse(x)).ToArray();
 		var signalMessage = new SignalMessage() with { signals = messageSignals };
 
-		if (messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702) && TMFRSPlugin.PlayConfetti.Value) {
+		if (!initialMessages && TMFRSPlugin.PlayConfetti.Value && messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702)) {
 			GameObject.Find("Confetti L (Controller)").GetComponent<ConfettiCannon>().Fire();
 		}
 
