@@ -22,11 +22,13 @@ public class RelayWindow
 	private static TextMeshPro relayOutput;
 	private static ScrollBar3D scrollbar;
 	private static ScrollArea scrollArea;
-	private static CalculatorWindow calculatorWindow;
 
 	private static float lineHeight;
 	private static float totalDisplayHeight;
 	private static List<RelayMessage> receivedMessages = new List<RelayMessage>();
+
+	private static CalculatorWindow calculatorWindow;
+	private static Oscilloscope relayOutputOscilloscope;
 
 	[HarmonyPatch(typeof(ConsoleDisplay), "Awake")]
 	[HarmonyPostfix]
@@ -83,6 +85,8 @@ public class RelayWindow
 
 		totalDisplayHeight = relayOutput.rectTransform.sizeDelta.y;
 		lineHeight = totalDisplayHeight / LinesPerPage;
+
+		relayOutputOscilloscope = GameObject.Find("Output Oscilloscope").GetComponent<Oscilloscope>();
 
 		RelaySocket.CallsignProcessed.AddListener((goodCallsign) => {
 			if (goodCallsign) {
@@ -193,6 +197,10 @@ public class RelayWindow
 		});
 
 		relayOutput.StartCoroutine(PrintTextRoutine(message, byChar, instant));
+
+		if (TMFRSPlugin.Oscilloscopes.Value) {
+			relayOutputOscilloscope.PlaySignal(signalMessage, true);
+		}
 	}
 
 	private static IEnumerator PrintTextRoutine(string text, bool byChar, bool instant) {

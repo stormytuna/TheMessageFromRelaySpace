@@ -9,6 +9,7 @@ namespace TMFRS;
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class TMFRSPlugin : BaseUnityPlugin
 {
+	public static ConfigEntry<bool> Oscilloscopes;
 	public static ConfigEntry<ColorSetType> ConfigTheme;
 	public static ConfigEntry<bool> DictionaryDynamicBudge;
 	public static ConfigEntry<bool> PlayConfetti;
@@ -32,9 +33,17 @@ public class TMFRSPlugin : BaseUnityPlugin
 	}
 
 	private void LoadConfig() {
-		string section = "General";
-		string key = "Colors";
-		string description = "The theme the monitor uses.\nVisual = Pink, Brown, Red\nAtoms = Blue\nSpace = Purple\nLife = Yellow, Green\nAbstractDust = Yellow, Red\nVitality = Pink, Red\nPlanet = Cyan\nComplexCulture = Orange, Purple\nKnowledge = White\nRetroGreen = Green\nRandom = Picks a random theme each time you load the game";
+		string section = "";
+		string key = "";
+		string description = "";
+
+		section = "General";
+		key = "Oscilloscopes";
+		description = "Whether or not to display incoming and outgoing Relay messages on the oscilloscopes";
+		Oscilloscopes = Config.Bind(section, key, true, description);
+
+		key = "Colors";
+		description = "The theme the monitor uses.\nVisual = Pink, Brown, Red\nAtoms = Blue\nSpace = Purple\nLife = Yellow, Green\nAbstractDust = Yellow, Red\nVitality = Pink, Red\nPlanet = Cyan\nComplexCulture = Orange, Purple\nKnowledge = White\nRetroGreen = Green\nRandom = Picks a random theme each time you load the game";
 		ConfigTheme = Config.Bind(section, key, ColorSetType.None, description);
 
 		key = "DictionaryLayoutDynamicWidth";
@@ -43,11 +52,11 @@ public class TMFRSPlugin : BaseUnityPlugin
 
 		section = "Confetti";
 		key = "Confetti";
-		description = "Whether the confetti cannon should be allowed to play when a specific frequency is sent. The frequency must also be defined in your dictionary.";
+		description = "Whether the confetti cannon should be allowed to play when a specific frequency is sent. The frequency must also be defined in your dictionary";
 		PlayConfetti = Config.Bind(section, key, true, description);
 
 		key = "MulticoloredConfetti";
-		description = "Whether the confetti should be multicolored or greyscale.";
+		description = "Whether the confetti should be multicolored or greyscale";
 		MulticoloredConfetti = Config.Bind(section, key, true, description);
 
 		section = "Typing";

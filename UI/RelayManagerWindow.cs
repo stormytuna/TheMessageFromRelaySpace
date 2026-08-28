@@ -29,13 +29,12 @@ public class RelayManagerWindow : InfoWindow
 	private static TextMeshPro newSignalIdInput;
 	private static TextMeshPro newSignalNameInput;
 
-
 	private static CalculatorWindow calculatorWindow;
 	private static PopupBox popupBox;
 	private static Autosaver autosaver;
 	private static DictionaryWindow dictionaryWindow;
 	private static PuzzleCounter puzzleCounter;
-
+	private static Oscilloscope playerInputOscilloscope;
 
 	[HarmonyPatch(typeof(TabsWindow), "Open")]
 	[HarmonyPostfix]
@@ -115,6 +114,7 @@ public class RelayManagerWindow : InfoWindow
 		autosaver = UnityHelpers.FindSingleInstanceObject<Autosaver>();
 		dictionaryWindow = UnityHelpers.FindSingleInstanceObject<DictionaryWindow>();
 		puzzleCounter = UnityHelpers.FindSingleInstanceObject<PuzzleCounter>();
+		playerInputOscilloscope = GameObject.Find("Input Oscilloscope").GetComponent<Oscilloscope>();
 
 		RelaySocket.CallsignProcessed.AddListener((goodCallsign) => {
 			if (goodCallsign) {
@@ -405,6 +405,10 @@ public class RelayManagerWindow : InfoWindow
 		RelaySocket.QueueSend(compiledMessage);
 
 		TextDummyManager.Instance_PuzzleInput.Clear();
+
+		if (TMFRSPlugin.Oscilloscopes.Value) {
+			playerInputOscilloscope.PlaySignal(signalMessage, false);
+		}
 	}
 
 	// TODO: Currently can't delete an entry then try remake it
