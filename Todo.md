@@ -6,7 +6,7 @@
     - [x] Make deleting player-made signals actually delete them from dict
 - [ ] Player facing error handling
 - [ ] Handle encryption channels
-- [ ] Handle graphs with in-game Visual tab
+- [x] Handle graphs with in-game Visual tab
 - [x] Print new messages character by character
 - [x] Config
     - [x] Toggle confetti cannon on |-702

@@ -17,6 +17,8 @@ public class RelayWindow
 {
 	private const float LinesPerPage = 12.315f;
 
+	public static List<RelayMessage> receivedMessages = new List<RelayMessage>();
+
 	private static GameObject relayRoot;
 	private static GameObject recompileButton;
 	private static TextMeshPro relayOutput;
@@ -25,7 +27,6 @@ public class RelayWindow
 
 	private static float lineHeight;
 	private static float totalDisplayHeight;
-	private static List<RelayMessage> receivedMessages = new List<RelayMessage>();
 
 	private static CalculatorWindow calculatorWindow;
 	private static Oscilloscope relayOutputOscilloscope;

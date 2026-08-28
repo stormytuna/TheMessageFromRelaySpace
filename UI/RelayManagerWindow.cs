@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using TMFRS.MonoBehaviours;
@@ -28,6 +29,7 @@ public class RelayManagerWindow : InfoWindow
 	private static GameObject switchToInputButton;
 	private static TextMeshPro newSignalIdInput;
 	private static TextMeshPro newSignalNameInput;
+	private static TextMeshPro messageSelectorInput;
 
 	private static CalculatorWindow calculatorWindow;
 	private static PopupBox popupBox;
@@ -35,6 +37,7 @@ public class RelayManagerWindow : InfoWindow
 	private static DictionaryWindow dictionaryWindow;
 	private static PuzzleCounter puzzleCounter;
 	private static Oscilloscope playerInputOscilloscope;
+	private static VisualWindow visualWindow;
 
 	[HarmonyPatch(typeof(TabsWindow), "Open")]
 	[HarmonyPostfix]
@@ -130,6 +133,7 @@ public class RelayManagerWindow : InfoWindow
 
 		calculatorWindow = GameObject.Find("Calculator Window").GetComponent<CalculatorWindow>();
 		popupBox = UnityHelpers.FindSingleInstanceObject<PopupBox>("Idea Popup");
+		visualWindow = UnityHelpers.FindSingleInstanceObject<VisualWindow>();
 
 		var callsignLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
 		callsignLabel.name = "Callsign Label";
@@ -254,6 +258,36 @@ public class RelayManagerWindow : InfoWindow
 		makeNewSignalButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		makeNewSignalButton.GetComponent<Button3D>().OnUseButton.AddListener(CreateNewDictEntry);
 		makeNewSignalButton.GetComponentInChildren<TextMeshPro>().text = "Make";
+
+		var messageSelectorLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		messageSelectorLabel.name = "Message Select Label";
+		messageSelectorLabel.transform.SetParent(relayManagerViewport.transform);
+		rectTransform = messageSelectorLabel.GetComponent<RectTransform>();
+		rectTransform.anchoredPosition = Vector2.zero;
+		rectTransform.position = new Vector3(-30.3f, 4.83f, 0f);
+		text = messageSelectorLabel.GetComponent<TextMeshPro>();
+		text.text = "View message visuals:";
+		text.textWrappingMode = TextWrappingModes.NoWrap;
+		text.overflowMode = TextOverflowModes.Overflow;
+
+		var messageSelectorInputObj = GameObject.Instantiate(calculatorWindow.operand1.gameObject);
+		messageSelectorInputObj.name = "Relay Message Selector Input";
+		messageSelectorInputObj.transform.SetParent(relayManagerViewport.transform);
+		messageSelectorInputObj.transform.position = new Vector3(-30.83f, 4.77f, 0.22f);
+		UnityHelpers.ScaleMeshVertices(messageSelectorInputObj.GetComponent<MeshFilter>().mesh, 0.2f, 0.6f);
+		messageSelectorInputObj.GetComponent<BoxCollider>().size -= Vector3.right * 0.8f;
+
+		messageSelectorInput = messageSelectorInputObj.GetComponentInChildren<TextMeshPro>();
+		messageSelectorInput.text = "";
+		messageSelectorInput.transform.position = new Vector3(-30.2f, 4.73f, 0.2141f);
+		
+		var viewMessageVisualButton = GameObject.Instantiate(exampleButton);
+		viewMessageVisualButton.name = "View Relay Message Visual Button";
+		viewMessageVisualButton.transform.SetParent(relayManagerViewport.transform);
+		viewMessageVisualButton.transform.position = new Vector3(-30.4f, 4.77f, 0.216f);
+		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
+		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton.AddListener(ViewVisual);
+		viewMessageVisualButton.GetComponentInChildren<TextMeshPro>().text = "View";
 	}
 
 	private void InitInputViewport() {
@@ -326,7 +360,6 @@ public class RelayManagerWindow : InfoWindow
 		relayInputViewport.SetActive(false);
 	}
 
-	// TODO: Update callsign if asked
 	private void SetCallsign() {
 		var callsign = callsignInput.label.text
 			.Where(c => (c - '0') <= 9 && (c - '0') >= 0)
@@ -379,6 +412,7 @@ public class RelayManagerWindow : InfoWindow
 		}
 
 		puzzleCounter.StartCoroutine(puzzleCounter.UpdateCounterRoutine(PuzzleManager.Instance.TotalPuzzleID + 1, 0f));
+
 		switchToInputButton.SetActive(false);
 		RelayManagerWindow.relaySocket.Disconnect();
 		GameObject.Destroy(RelayManagerWindow.relaySocket);
@@ -450,6 +484,51 @@ public class RelayManagerWindow : InfoWindow
 			// Should never happen, but just in case, let the user know it didn't work
 			popupBox.PopupWithLabel("Failed to add signal");
 		}
+	}
+
+	private void ViewVisual() {
+		if (RelayWindow.receivedMessages.Count <= 0) {
+			popupBox.PopupWithLabel("No messages to try select :(");
+			return;
+		}
+
+		string selectedMessageText = messageSelectorInput.text.Trim(' ').Trim('\u200b');
+		if (!short.TryParse(selectedMessageText, out var selectedMessageId)) {
+			popupBox.PopupWithLabel("Message ID must be an integer");
+			return;
+		}
+
+		var index = RelayWindow.receivedMessages.FindIndex(0, x => x.TransmissionId == selectedMessageId);
+		if (index < 0) {
+			popupBox.PopupWithLabel("Message " + selectedMessageId + " does not exist");
+			return;
+		}
+
+		var selectedMessage = RelayWindow.receivedMessages[index];
+		var dummyPuzzle = ScriptableObject.CreateInstance<Puzzle>();
+		dummyPuzzle.rockOutput = selectedMessage.Signals;
+		
+		// Visual Window expects validVisuals to be set to the index of the 'Visual'/'Graph'/'Image' signal
+		bool foundVisual = false;
+		var signals = dummyPuzzle.rockOutput.signals;
+		for (int i = 0; i < signals.Length; i++) {
+			if (signals[i] == -53 && i < signals.Length -1 && signals[i + 1] == -14) {
+				foundVisual = true;
+				visualWindow.validVisuals = new List<int>();
+				visualWindow.validVisuals.Add(i);
+				break;
+			}
+		}
+
+		if (!foundVisual) {
+			popupBox.PopupWithLabel("Message " + selectedMessageId + " has no visual data");
+			return;
+		}
+
+		visualWindow.QueueDraw(dummyPuzzle);
+		visualWindow.currDrawPuzzle = dummyPuzzle;
+		visualWindow.visualDetectedPopup.Popup();
+		RelayManagerWindow.infoDisplay.SwitchWindow(RelayManagerWindow.infoDisplay.visualWindow);
 	}
 
 	private static void SwitchToManager() {
