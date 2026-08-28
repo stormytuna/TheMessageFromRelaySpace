@@ -6,11 +6,11 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TMFRS.UI;
+using TRFDS.UI;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace TMFRS.MonoBehaviours;
+namespace TRFDS.MonoBehaviours;
 
 // Adapted, with permission, from https://codeberg.org/TacoConKvass/dscr-cli/src/commit/8683a0902571f0e399dbf131365e65002589286a/src/dscr-client/DscrSocket.cs
 
@@ -33,7 +33,7 @@ public class RelaySocket : MonoBehaviour
 		socket = new ClientWebSocket();
 
 		try {
-			var goodCallsign = await TryConnect(socket, new Uri(TMFRSPlugin.RelaySource.Value), cancellationToken.Token);
+			var goodCallsign = await TryConnect(socket, new Uri(TRFDSPlugin.RelaySource.Value), cancellationToken.Token);
 			if (!goodCallsign) {
 				CallsignProcessed.Invoke(false);
 				Disconnect();
@@ -50,7 +50,7 @@ public class RelaySocket : MonoBehaviour
 			// noop, we don't want to log errors from closing the game
 		}
 		catch (Exception ex) {
-			TMFRSPlugin.Logger.LogError(ex);
+			TRFDSPlugin.Logger.LogError(ex);
 		}
 	}
 
@@ -60,7 +60,7 @@ public class RelaySocket : MonoBehaviour
 		}
 
 		var nextMessage = receivedMessages.Dequeue();
-		RelayWindow.PrintText(nextMessage, nextMessage.Length < TMFRSPlugin.RelayTypeCharByCharCutoff.Value, nextMessage.Length >= TMFRSPlugin.RelayTypeLineByLineCutoff.Value);
+		RelayWindow.PrintText(nextMessage, nextMessage.Length < TRFDSPlugin.RelayTypeCharByCharCutoff.Value, nextMessage.Length >= TRFDSPlugin.RelayTypeLineByLineCutoff.Value);
 	}
 
 	private IEnumerator ShowMessages() {

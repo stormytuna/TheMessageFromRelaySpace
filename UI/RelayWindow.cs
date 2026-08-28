@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using HarmonyLib;
-using TMFRS.DataStructures;
-using TMFRS.MonoBehaviours;
+using TRFDS.DataStructures;
+using TRFDS.MonoBehaviours;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace TMFRS.UI;
+namespace TRFDS.UI;
 
 [HarmonyPatch]
 public class RelayWindow
@@ -164,7 +164,7 @@ public class RelayWindow
 			return;
 		}
 
-		if (TMFRSPlugin.RelayTypingDelay.Value <= 0f) {
+		if (TRFDSPlugin.RelayTypingDelay.Value <= 0f) {
 			instant = true;
 		}
 
@@ -182,7 +182,7 @@ public class RelayWindow
 		int[] messageSignals = matches.Groups[3].Value.Split(',').Select(x => int.Parse(x)).ToArray();
 		var signalMessage = new SignalMessage() with { signals = messageSignals };
 
-		if (!initialMessages && TMFRSPlugin.PlayConfetti.Value && messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702)) {
+		if (!initialMessages && TRFDSPlugin.PlayConfetti.Value && messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702)) {
 			GameObject.Find("Confetti L (Controller)").GetComponent<ConfettiCannon>().Fire();
 		}
 
@@ -199,7 +199,7 @@ public class RelayWindow
 
 		relayOutput.StartCoroutine(PrintTextRoutine(message, byChar, instant));
 
-		if (TMFRSPlugin.Oscilloscopes.Value) {
+		if (TRFDSPlugin.Oscilloscopes.Value) {
 			relayOutputOscilloscope.PlaySignal(signalMessage, true);
 		}
 	}
@@ -218,7 +218,7 @@ public class RelayWindow
 				relayOutput.maxVisibleCharacters = i;
 				SFXPlayer.instance.PlayMonitorTypeBlip();
 				if (!instant) {
-					yield return new WaitForSeconds(TMFRSPlugin.RelayTypingDelay.Value);
+					yield return new WaitForSeconds(TRFDSPlugin.RelayTypingDelay.Value);
 				}
 			}
 		} else {
@@ -227,7 +227,7 @@ public class RelayWindow
 				relayOutput.maxVisibleLines = i;
 				SFXPlayer.instance.PlayMonitorTypeBlip();
 				if (!instant) {
-					yield return new WaitForSeconds(TMFRSPlugin.RelayTypingDelay.Value);
+					yield return new WaitForSeconds(TRFDSPlugin.RelayTypingDelay.Value);
 				}
 			}
 		}

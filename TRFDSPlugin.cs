@@ -2,12 +2,12 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using TMFRS.UI;
+using TRFDS.UI;
 
-namespace TMFRS;
+namespace TRFDS;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-public class TMFRSPlugin : BaseUnityPlugin
+public class TRFDSPlugin : BaseUnityPlugin
 {
 	public static ConfigEntry<bool> Oscilloscopes;
 	public static ConfigEntry<ColorSetType> ConfigTheme;

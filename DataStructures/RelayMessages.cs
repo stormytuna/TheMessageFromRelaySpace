@@ -1,4 +1,4 @@
-namespace TMFRS.DataStructures;
+namespace TRFDS.DataStructures;
 
 public struct RelayMessage
 {

@@ -1,7 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
 
-namespace TMFRS.UI;
+namespace TRFDS.UI;
 
 [HarmonyPatch]
 public static class DictionaryPatch
@@ -10,7 +10,7 @@ public static class DictionaryPatch
 	[HarmonyPostfix]
 	public static void FixOverlappingDictDefinitions(DictionaryEntry __instance) {
 		int budgeAmount = 0;
-		if (TMFRSPlugin.DictionaryDynamicBudge.Value) {
+		if (TRFDSPlugin.DictionaryDynamicBudge.Value) {
 			budgeAmount = __instance.idLabel.text.Length - 4;
 		} else {
 			budgeAmount = 3;

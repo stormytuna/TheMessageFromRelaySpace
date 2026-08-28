@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
-using TMFRS.MonoBehaviours;
+using TRFDS.MonoBehaviours;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
 
-namespace TMFRS.UI;
+namespace TRFDS.UI;
 
 [HarmonyPatch]
 public class RelayManagerWindow : InfoWindow
@@ -426,7 +426,7 @@ public class RelayManagerWindow : InfoWindow
 		var signalMessage = ConsoleDisplay.Instance.compiler.CompileStringToSignal(message, ref compilerResult);
 		if (compilerResult.compilerResultTag == CompilerResultTag.ERROR) {
 			// TODO: Better error display
-			TMFRSPlugin.Logger.LogError("Compilation error: " + compilerResult.errorMsg);
+			TRFDSPlugin.Logger.LogError("Compilation error: " + compilerResult.errorMsg);
 			popupBox.PopupWithLabel("Compilation errors: " + compilerResult.errorsCaught);
 			return;
 		}
@@ -440,7 +440,7 @@ public class RelayManagerWindow : InfoWindow
 
 		TextDummyManager.Instance_PuzzleInput.Clear();
 
-		if (TMFRSPlugin.Oscilloscopes.Value) {
+		if (TRFDSPlugin.Oscilloscopes.Value) {
 			playerInputOscilloscope.PlaySignal(signalMessage, false);
 		}
 	}
