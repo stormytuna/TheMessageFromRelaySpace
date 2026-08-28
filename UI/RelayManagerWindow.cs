@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
+using System.IO;
 
 namespace TRFDS.UI;
 
@@ -18,8 +19,11 @@ public class RelayManagerWindow : InfoWindow
 
 	private static bool initRelayButton = false;
 	private static bool initInfoDisplay = false;
+	private static bool loadEnabledChannels = false;
 	private static bool reinitDict = false;
 	private static int currCallsignBase8;
+	private static int currChannelIndex = 0;
+	private static List<(int id, string name)> enabledChannels = new List<(int, string)>() { (0, "Default channel") };
 
 	private static GameObject relayManagerViewport;
 	private static GameObject relayInputViewport;
@@ -30,6 +34,7 @@ public class RelayManagerWindow : InfoWindow
 	private static TextMeshPro newSignalIdInput;
 	private static TextMeshPro newSignalNameInput;
 	private static TextMeshPro messageSelectorInput;
+	private static TextMeshPro currentChannelLabel;
 
 	private static CalculatorWindow calculatorWindow;
 	private static PopupBox popupBox;
@@ -288,6 +293,49 @@ public class RelayManagerWindow : InfoWindow
 		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton.AddListener(ViewVisual);
 		viewMessageVisualButton.GetComponentInChildren<TextMeshPro>().text = "View";
+
+		var changeChannelLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		changeChannelLabel.name = "Change Channel Label";
+		changeChannelLabel.transform.SetParent(relayManagerViewport.transform);
+		rectTransform = changeChannelLabel.GetComponent<RectTransform>();
+		rectTransform.anchoredPosition = Vector2.zero;
+		rectTransform.position = new Vector3(-30.3f, 4.52f, 0f);
+		text = changeChannelLabel.GetComponent<TextMeshPro>();
+		text.text = "Select channel:";
+		text.textWrappingMode = TextWrappingModes.NoWrap;
+		text.overflowMode = TextOverflowModes.Overflow;
+
+		var channelLeftButton = GameObject.Instantiate(exampleButton);
+		channelLeftButton.name = "Cycle Channel Left Button";
+		channelLeftButton.transform.SetParent(relayManagerViewport.transform);
+		channelLeftButton.transform.position = new Vector3(-30.89f, 4.45f, 0.216f);
+		channelLeftButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
+		channelLeftButton.GetComponent<Button3D>().OnUseButton.AddListener(() => CycleChannel(-1));
+		channelLeftButton.GetComponentInChildren<TextMeshPro>().text = "<";
+		UnityHelpers.ScaleMeshVertices(channelLeftButton.GetComponent<MeshFilter>().mesh, 0.5f);
+		channelLeftButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.5f;
+
+		var channelRightButton = GameObject.Instantiate(exampleButton);
+		channelRightButton.name = "Cycle Channel Right Button";
+		channelRightButton.transform.SetParent(relayManagerViewport.transform);
+		channelRightButton.transform.position = new Vector3(-29.58f, 4.45f, 0.216f);
+		channelRightButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
+		channelRightButton.GetComponent<Button3D>().OnUseButton.AddListener(() => CycleChannel(1));
+		channelRightButton.GetComponentInChildren<TextMeshPro>().text = ">";
+		UnityHelpers.ScaleMeshVertices(channelRightButton.GetComponent<MeshFilter>().mesh, 0.5f);
+		channelRightButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.5f;
+
+		var currentChannelLabelObj = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		currentChannelLabelObj.name = "Current Channel Label";
+		currentChannelLabelObj.transform.SetParent(relayManagerViewport.transform);
+		rectTransform = currentChannelLabelObj.GetComponent<RectTransform>();
+		rectTransform.anchoredPosition = Vector2.zero;
+		rectTransform.position = new Vector3(-30.235f, 4.445f, 0f);
+		currentChannelLabel = currentChannelLabelObj.GetComponent<TextMeshPro>();
+		currentChannelLabel.text = enabledChannels[currChannelIndex].name;
+		currentChannelLabel.textWrappingMode = TextWrappingModes.NoWrap;
+		currentChannelLabel.overflowMode = TextOverflowModes.Overflow;
+		currentChannelLabel.alignment = TextAlignmentOptions.Center;
 	}
 
 	private void InitInputViewport() {
@@ -345,6 +393,11 @@ public class RelayManagerWindow : InfoWindow
 	}
 
 	public override void Open() {
+		if (!loadEnabledChannels) {
+			LoadEnabledChannels();
+			loadEnabledChannels = true;
+		}
+
 		// TODO: Opening relay from RESPOND window bugs out
 		if (RelaySocket.Callsign == null) {
 			relayManagerViewport.SetActive(true);
@@ -431,7 +484,54 @@ public class RelayManagerWindow : InfoWindow
 			return;
 		}
 
-		// TODO: Handle encrypted messages, somehow
+		if (signalMessage.signals[0] == -65534) {
+			if (signalMessage.signals.Length > 2 || signalMessage.signals.ElementAtOrDefault(1) >= 0) {
+				popupBox.PopupWithLabel($"Usage: {UserDictionary.Instance.GetWordFromInt(-65534)} <signal>");
+				return;
+			}
+
+			if (enabledChannels.Any(x => x.id == signalMessage.signals[1])) {
+				popupBox.PopupWithLabel("Already in channel: " + UserDictionary.Instance.GetWordFromInt(signalMessage.signals[1]));
+				return;
+			}
+
+			enabledChannels.Add((signalMessage.signals[1], UserDictionary.Instance.GetWordFromInt(signalMessage.signals[1])));
+			currChannelIndex = enabledChannels.Count - 1;
+			currentChannelLabel.text = enabledChannels[currChannelIndex].name;
+			RelayWindow.SetActiveChannel(enabledChannels[currChannelIndex].id);
+			popupBox.PopupWithLabel("Joined channel: " + enabledChannels[currChannelIndex].name);
+			SaveEnabledChannels();
+			TextDummyManager.Instance_PuzzleInput.Clear();
+			return;
+		}
+
+		if (signalMessage.signals[0] == -65533) {
+			if (signalMessage.signals.Length > 2 || signalMessage.signals.ElementAtOrDefault(1) >= 0) {
+				popupBox.PopupWithLabel($"Usage: {UserDictionary.Instance.GetWordFromInt(-65533)} <signal>");
+				return;
+			}
+
+			int enabledChannelIndex = enabledChannels.FindIndex(0, x => x.id == signalMessage.signals[1]);
+			if (enabledChannelIndex < 0) {
+				popupBox.PopupWithLabel("Not in channel: " + UserDictionary.Instance.GetWordFromInt(signalMessage.signals[1]));
+				return;
+			}
+
+			string name = enabledChannels[enabledChannelIndex].name;
+			enabledChannels.RemoveAt(enabledChannelIndex);
+			currChannelIndex = 0;
+			currentChannelLabel.text = enabledChannels[currChannelIndex].name;
+			RelayWindow.SetActiveChannel(enabledChannels[currChannelIndex].id);
+			popupBox.PopupWithLabel("Left channel: " + name);
+			SaveEnabledChannels();
+			TextDummyManager.Instance_PuzzleInput.Clear();
+			return;
+		}
+
+		int activeChannelId = enabledChannels[currChannelIndex].id;
+		if (activeChannelId != 0 && activeChannelId != -65536) {
+			signalMessage.signals = new int[]{-65535, activeChannelId}.Concat(signalMessage.signals).ToArray();
+		}
 
 		var signals = signalMessage.signals.Join(delimiter: ",");
 		var compiledMessage = "M," + signals;
@@ -498,13 +598,13 @@ public class RelayManagerWindow : InfoWindow
 			return;
 		}
 
-		var index = RelayWindow.receivedMessages.FindIndex(0, x => x.TransmissionId == selectedMessageId);
+		var index = RelayWindow.activeChannel.FindIndex(0, x => x.TransmissionId == selectedMessageId);
 		if (index < 0) {
-			popupBox.PopupWithLabel("Message " + selectedMessageId + " does not exist");
+			popupBox.PopupWithLabel("Message " + selectedMessageId + " not in active channel");
 			return;
 		}
 
-		var selectedMessage = RelayWindow.receivedMessages[index];
+		var selectedMessage = RelayWindow.activeChannel[index];
 		var dummyPuzzle = ScriptableObject.CreateInstance<Puzzle>();
 		dummyPuzzle.rockOutput = selectedMessage.Signals;
 		
@@ -529,6 +629,44 @@ public class RelayManagerWindow : InfoWindow
 		visualWindow.currDrawPuzzle = dummyPuzzle;
 		visualWindow.visualDetectedPopup.Popup();
 		RelayManagerWindow.infoDisplay.SwitchWindow(RelayManagerWindow.infoDisplay.visualWindow);
+	}
+
+
+	private static void CycleChannel(int dir) {
+		currChannelIndex += dir;
+		if (currChannelIndex >= enabledChannels.Count) {
+			currChannelIndex = 0;
+		}
+		if (currChannelIndex < 0) {
+			currChannelIndex = enabledChannels.Count - 1;
+		}
+
+		currentChannelLabel.text = enabledChannels[currChannelIndex].name;
+		RelayWindow.SetActiveChannel(enabledChannels[currChannelIndex].id);
+	}
+
+	private static void SaveEnabledChannels() {
+		var tmfrsDataDir = Path.Join(Application.persistentDataPath, $"/{nameof(TRFDS)}");
+		if (!Directory.Exists(tmfrsDataDir)) {
+			Directory.CreateDirectory(tmfrsDataDir);
+		}
+
+		var enabledChannelsFile = Path.Join(tmfrsDataDir, "enabledChannels.save");
+		var enabledChannelsText = enabledChannels.Select(x => x.id).Where(x => x != 0).Join(delimiter: ",");
+		File.WriteAllText(enabledChannelsFile, enabledChannelsText);
+	}
+
+	private static void LoadEnabledChannels() {
+		var savedChannelsFile = Path.Join(Application.persistentDataPath, $"/{nameof(TRFDS)}/enabledChannels.save");
+		if (!File.Exists(savedChannelsFile)) {
+			return;
+		}
+
+		var savedChannelsText = File.ReadAllText(savedChannelsFile);
+		var savedChannels = savedChannelsText.Split(',').Select(x => int.Parse(x)).ToArray();
+		foreach (var savedChannel in savedChannels) {
+			enabledChannels.Add((savedChannel, UserDictionary.Instance.GetWordFromInt(savedChannel)));
+		}
 	}
 
 	private static void SwitchToManager() {

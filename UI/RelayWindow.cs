@@ -17,7 +17,8 @@ public class RelayWindow
 {
 	private const float LinesPerPage = 12.315f;
 
-	public static List<RelayMessage> receivedMessages = new List<RelayMessage>();
+	public static Dictionary<int, List<RelayMessage>> receivedMessages;
+	public static List<RelayMessage> activeChannel;
 
 	private static GameObject relayRoot;
 	private static GameObject recompileButton;
@@ -92,6 +93,10 @@ public class RelayWindow
 		RelaySocket.CallsignProcessed.AddListener((goodCallsign) => {
 			if (goodCallsign) {
 				recompileButton.SetActive(true);
+				receivedMessages = new Dictionary<int, List<RelayMessage>>();
+				activeChannel = new List<RelayMessage>();
+				receivedMessages.Add(0, activeChannel);
+				receivedMessages.Add(-65536, new List<RelayMessage>());
 			}
 		});
 
@@ -117,7 +122,8 @@ public class RelayWindow
 		relayOutput.text = "";
 		relayOutput.maxVisibleLines = 0;
 		relayOutput.maxVisibleCharacters = 0;
-		receivedMessages = new List<RelayMessage>();
+		receivedMessages = null;
+		activeChannel = null;
 
 		RelayManagerWindow.Disconnect();
 
@@ -132,8 +138,8 @@ public class RelayWindow
 		var compiler = ConsoleDisplay.Instance.compiler;
 
 		if (TRFDSPlugin.ShortenVisuals.Value) {
-			for (int i = 0; i < signalMessage.signals.Length; i++) {
-				if (signalMessage.signals[i] == -53 && signalMessage.signals[i + 1] == -14) {
+			for (int i = 0; i < signalMessage.signals.Length - 1; i++) {
+				if (signalMessage.signals[i] == -53 && signalMessage.signals.ElementAtOrDefault(i + 1) == -14) {
 					var newSignals = signalMessage.signals.Take(i + 2).Concat([-25, -15]);
 					signalMessage.signals = newSignals.ToArray();
 					break;
@@ -156,8 +162,17 @@ public class RelayWindow
 		return compiledOutput;
 	}
 
-	private static string GetPlaintextMessage(short sender, short transmissionId, string text) {
-		string leadingNewlines = receivedMessages.Count <= 1 ? "" : "\n\n";
+	public static void SetActiveChannel(int channel) {
+		if (!receivedMessages.ContainsKey(channel)) {
+			receivedMessages.Add(channel, new List<RelayMessage>());
+		}
+
+		activeChannel = receivedMessages[channel];
+		Recompile();
+	}
+
+	private static string GetPlaintextMessage(short sender, short transmissionId, string text, bool forceNoStartNewline = false) {
+		string leadingNewlines = (activeChannel.Count <= 1 || forceNoStartNewline) ? "" : "\n\n";
 		return $"{leadingNewlines}{sender}:{transmissionId}\n{text}";
 	}
 	
@@ -167,9 +182,10 @@ public class RelayWindow
 		relayOutput.maxVisibleCharacters = 0;
 
 		string text = "";
-		foreach (var message in receivedMessages) {
-			string compiledOutput = CompileSignalsToString(message.Signals, out _);
-			text += GetPlaintextMessage(message.Sender, message.TransmissionId, compiledOutput);
+        for (int i = 0; i < activeChannel.Count; i++) {
+            RelayMessage message = activeChannel[i];
+            string compiledOutput = CompileSignalsToString(message.Signals, out _);
+			text += GetPlaintextMessage(message.Sender, message.TransmissionId, compiledOutput, i == 0);
 		}
 
 		relayOutput.StartCoroutine(PrintTextRoutine(text, false, true));
@@ -205,24 +221,42 @@ public class RelayWindow
 			GameObject.Find("Confetti L (Controller)").GetComponent<ConfettiCannon>().Fire();
 		}
 
-		var compiledOutput = CompileSignalsToString(signalMessage, out var compileResult);
-
 		var senderBase10 = int.Parse(sender);
 		var senderBase8 = calculatorWindow.EuclideanBaseChange(senderBase10, 10, 8);
 
-		var relayMessage = new RelayMessage() {
+		var relayMessageForSkeleton = new RelayMessage() {
 			Sender = short.Parse(senderBase8),
 			TransmissionId = short.Parse(messageNumber),
 			Signals = signalMessage,
 		};
+		var relayMessageForChannel = relayMessageForSkeleton;
 
-		receivedMessages.Add(relayMessage);
+		int channel = 0;
+		if (signalMessage.signals[0] == -65535 && signalMessage.signals.Length >= 2) {
+			channel = signalMessage.signals[1];
+			if (!receivedMessages.ContainsKey(channel)) {
+				receivedMessages.Add(channel, new List<RelayMessage>());
+			}
 
-		string message = GetPlaintextMessage(relayMessage.Sender, relayMessage.TransmissionId, compiledOutput);
-		relayOutput.StartCoroutine(PrintTextRoutine(message, byChar, instant));
+			relayMessageForChannel = relayMessageForSkeleton with {
+				Signals = new SignalMessage() with { signals = messageSignals.Skip(2).ToArray() }
+			};
+		}
 
-		if (TRFDSPlugin.Oscilloscopes.Value) {
-			relayOutputOscilloscope.PlaySignal(signalMessage, true);
+		receivedMessages[channel].Add(relayMessageForChannel);
+		receivedMessages[-65536].Add(relayMessageForSkeleton);
+
+		var signalsToCompile = activeChannel == receivedMessages[-65536] ? relayMessageForSkeleton.Signals : relayMessageForChannel.Signals;
+
+		var compiledOutput = CompileSignalsToString(signalsToCompile, out var compileResult);
+
+		if (activeChannel == receivedMessages[-65536] || activeChannel == receivedMessages[channel]) {
+			string message = GetPlaintextMessage(relayMessageForSkeleton.Sender, relayMessageForSkeleton.TransmissionId, compiledOutput);
+			relayOutput.StartCoroutine(PrintTextRoutine(message, byChar, instant));
+
+			if (TRFDSPlugin.Oscilloscopes.Value) {
+				relayOutputOscilloscope.PlaySignal(signalMessage, true);
+			}
 		}
 	}
 
