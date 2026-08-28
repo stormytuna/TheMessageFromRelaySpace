@@ -55,7 +55,7 @@ When people send pretty visuals, you can use this to see them. Enter the ID of t
 
 <img width="1136" height="891" alt="image" src="https://github.com/user-attachments/assets/382485c8-87c4-4491-9713-88fa21911b66" />
 
-Image created by astro (callsign 1574)
+Image created by [astro (callsign 1574)](https://github.com/A5TR0spud)
 
 ### Channels
 
