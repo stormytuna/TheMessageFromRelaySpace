@@ -1,10 +1,11 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 
 namespace TRFDS.UI;
-
-// TODO: Save dictionary in signal order. New sigs get put at the bottom of the list and stay there, very sad
 
 [HarmonyPatch]
 public static class DictionaryPatch
@@ -49,5 +50,21 @@ public static class DictionaryPatch
 		}
 
 		return true;
+	}
+
+	[HarmonyPatch(typeof(UserDictionary), nameof(UserDictionary.LoadPopulate))]
+	[HarmonyPrefix]
+	public static void SortDictionaryKeys(ref Dictionary<int, string> lWordDict) {
+		var keys = lWordDict.Keys.ToArray();	
+		var terms = lWordDict.Values.ToArray();
+		Array.Sort(keys, terms, new ReverseComparer());
+		lWordDict = keys.Zip(terms, (k, v) => new {k, v}).ToDictionary(x => x.k, x => x.v);
+	}
+}
+
+class ReverseComparer : IComparer
+{
+	int IComparer.Compare(object x, object y) {
+		return Comparer.Default.Compare(y, x);
 	}
 }
