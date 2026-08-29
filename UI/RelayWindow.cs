@@ -113,6 +113,8 @@ public class RelayWindow
 		var console = ConsoleDisplay.Instance;
 		console.display.gameObject.SetActive(false);
 		console.readMessageGroup.gameObject.SetActive(false);
+		console.inputDisplay.gameObject.SetActive(false);
+		console.responseGroup.gameObject.SetActive(false);
 		console.monitorVisual.OnWipe();
 	}
 

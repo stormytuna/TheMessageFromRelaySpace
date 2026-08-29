@@ -241,7 +241,6 @@ public class RelayManagerWindow : InfoWindow
 		UnityHelpers.ScaleMeshVertices(newSignalId.GetComponent<MeshFilter>().mesh, 0.3f, 0.6f);
 		newSignalId.GetComponent<BoxCollider>().size -= Vector3.right * 0.4f;
 
-		// TODO: Lock signal text to be `-XXXXXX`
 		newSignalIdInput = newSignalId.GetComponentInChildren<TextMeshPro>();
 		newSignalIdInput.text = "-";
 		newSignalIdInput.transform.localPosition = new Vector3(0.3503f, -0.2237f, -0.59f);
@@ -394,13 +393,23 @@ public class RelayManagerWindow : InfoWindow
 		}
 	}
 
+	[HarmonyPatch(typeof(SimpleWriter), nameof(SimpleWriter.BecomeWritingTarget))]
+	[HarmonyPrefix]
+	public static void FuckUnfuckFloatTextDummy(SimpleWriter __instance) {
+		if (__instance == callsignInput) {
+			TextDummyManager.Instance_Float.InputField.inputValidator = ScriptableObject.CreateInstance<CallsignInputValidator>();
+			return;
+		} else if (TextDummyManager.Instance_Float.InputField.inputValidator is not FloatInputValidator) {
+			TextDummyManager.Instance_Float.InputField.inputValidator = ScriptableObject.CreateInstance<FloatInputValidator>();
+		}
+	}
+
 	public override void Open() {
 		if (!loadEnabledChannels) {
 			LoadEnabledChannels();
 			loadEnabledChannels = true;
 		}
 
-		// TODO: Opening relay from RESPOND window bugs out
 		if (RelaySocket.Callsign == null) {
 			relayManagerViewport.SetActive(true);
 		}
@@ -416,17 +425,10 @@ public class RelayManagerWindow : InfoWindow
 	}
 
 	private void SetCallsign() {
-		var callsign = callsignInput.label.text
-			.Where(c => (c - '0') <= 9 && (c - '0') >= 0)
-			.Join(delimiter: "");
+		var callsign = callsignInput.label.text.Where(c => (c - '0') <= 9 && (c - '0') >= 0).Join(delimiter: "");
 
 		if (callsign.Length != 4) {
 			popupBox.PopupWithLabel("Callsign length must be 4");
-			return;
-		}
-		
-		if (callsign.Any(c => c == '8' || c == '9')) {
-			popupBox.PopupWithLabel("Callsign must be in base 8");
 			return;
 		}
 
