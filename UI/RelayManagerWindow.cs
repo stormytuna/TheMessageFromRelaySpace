@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
 using System.IO;
+using System.Reflection;
 
 namespace TRFDS.UI;
 
@@ -58,16 +59,17 @@ public class RelayManagerWindow : InfoWindow
 		var relayButton = GameObject.Instantiate(ideasButton, ideasButton.transform.position with { y = 4.46f }, Quaternion.identity);
 		relayButton.name = "Relay Tab";
 
-		// TODO: What is this even doing? why are we modifying localPos?
-		var y = relayButton.transform.localPosition.y;
-		y = -0.49f;
-
 		relayButton.transform.SetParent(ideasButton.transform.parent);
 
 		var text = relayButton.GetComponentInChildren<TextMeshPro>();
 		text.text = "Relay";
 
-		// TODO: Custom icon? Not sure how feasible this is...
+		using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TRFDS.Assets.relay.png");
+		byte[] textureData = new byte[stream.Length];
+		stream.Read(textureData, 0, textureData.Length);
+		Texture2D texture = new Texture2D(2, 2);
+		texture.LoadImage(textureData);
+		relayButton.transform.Find("Icon").GetComponent<MeshRenderer>().material.mainTexture = texture;
 		
 		var button = relayButton.GetComponent<Button3D>();
 		button.OnUseButton = new UnityEngine.Events.UnityEvent();
