@@ -161,8 +161,6 @@ public class RelayManagerWindow : InfoWindow
 		var inputFieldBackground = inputField.GetComponent<MeshFilter>().mesh;
 		UnityHelpers.ScaleMeshVertices(inputFieldBackground, 0.2f, 0.6f);
 
-		// TODO: Callsign repurposes the float input field, which has maxLength = 36 and allows invalid chars like 8, 9, .
-		// Need to update it somehow, patching would work but is clunky, not sure how to create a custom input field... requires thought
 		callsignInput = inputField.GetComponent<SimpleWriter>();
 		callsignInput.label.transform.position = new Vector3(-29.1f, 5.46f, 0.2141f);
 
@@ -482,9 +480,18 @@ public class RelayManagerWindow : InfoWindow
 		var compilerResult = new CompilerResult();
 		var signalMessage = ConsoleDisplay.Instance.compiler.CompileStringToSignal(message, ref compilerResult);
 		if (compilerResult.compilerResultTag == CompilerResultTag.ERROR) {
-			// TODO: Better error display
-			TRFDSPlugin.Logger.LogError("Compilation error: " + compilerResult.errorMsg);
-			popupBox.PopupWithLabel("Compilation errors: " + compilerResult.errorsCaught);
+			var errorStrings = compilerResult.errorMsg.Split(Environment.NewLine);
+			var errorType = errorStrings[1];
+
+			if (errorType == "Null Input") {
+				popupBox.PopupWithLabel("Err: null input");
+			} else if (errorType.Contains("Entry not found")) {
+				string unknownEntry = errorStrings[2];
+				popupBox.PopupWithLabel($"Err: {unknownEntry} not found");
+			} else {
+				popupBox.PopupWithLabel("Err: Unknown error type");
+			}
+
 			return;
 		}
 
