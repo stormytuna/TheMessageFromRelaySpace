@@ -171,9 +171,47 @@ public class RelayWindow
 		Recompile();
 	}
 
+	private static float HueToRgb(float p, float q, float t) {
+		if (t < 0f) {
+			t += 1f;
+		}  else if (t > 1f) {
+			t -= 1f;
+		}
+
+		if (t < 0.166f) {
+			return (q - p) * 6f * t + p;
+		} else if (t < 0.5f) {
+			return q;
+		} else if (t < 0.666f) {
+			return (q - p) * (0.666f - t) * 6f + p;
+		}
+
+		return p;
+	}
+
+	// Callsign colours implemented with compatibility with DSCR and astro's client
+	// Adapted, with permission, from: https://github.com/A5TR0spud/dscr_asterclient/blob/b57ed2d4077a3ec0cfaeeeadebd3d174ad2239ec/Scenes/Main/main.gd#L89-L120
+	private static Color GetCallsignColor(int callsign) {
+		float hue = ((137.5f * callsign) % 360f) / 360f;	
+		float saturation = 1f;
+		float lightness = 0.7f;
+		
+		float r, g, b;
+		var q = lightness + saturation - (lightness * saturation);
+		var p = 2 * lightness - q;
+		r = HueToRgb(p, q, hue + 0.33f);
+		g = HueToRgb(p, q, hue);
+		b = HueToRgb(p, q, hue - 0.33f);
+
+		return new Color(r, g, b);
+	}
+
 	private static string GetPlaintextMessage(short sender, short transmissionId, string text, bool forceNoStartNewline = false) {
 		string leadingNewlines = (activeChannel.Count <= 1 || forceNoStartNewline) ? "" : "\n\n";
-		return $"{leadingNewlines}{sender}:{transmissionId}\n{text}";
+		Color callsignColor = GetCallsignColor(sender);
+		string callsign = sender.ToString().PadLeft(4, '0');
+		string transmissionNumber = transmissionId.ToString().PadLeft(3, '0');
+		return $"{leadingNewlines}<color=#{ColorUtility.ToHtmlStringRGB(callsignColor)}>{callsign}</color> <color=#{ColorUtility.ToHtmlStringRGB(Color.grey)}>{transmissionNumber}</color>\n{text}";
 	}
 	
 	private static void Recompile() {

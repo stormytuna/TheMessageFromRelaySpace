@@ -3,6 +3,8 @@ using UnityEngine;
 
 namespace TRFDS.UI;
 
+// TODO: Save dictionary in signal order. New sigs get put at the bottom of the list and stay there, very sad
+
 [HarmonyPatch]
 public static class DictionaryPatch
 {

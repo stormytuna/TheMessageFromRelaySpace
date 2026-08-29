@@ -25,7 +25,7 @@ After installing the mod, you will see a new RELAY button on the main tabs view.
 
 <img width="398" height="174" alt="image" src="https://github.com/user-attachments/assets/b9a3af6a-4e82-406c-9476-e31efb9439e3" />
 
-The RELAY MANAGER, RELAY INPUT, and RELAY screens are how you interact with the Relay. The RELAY MANAGER screen is daunting at first, but all is explained in the [Features](Readme.md#Features) section below.
+The RELAY MANAGER, RELAY INPUT, and RELAY screens are how you interact with the Relay. The RELAY MANAGER screen is daunting at first, but all is explained in the [Features](README.md#Features) section below.
 
 Enter a callsign, in base 8, and then click SET to begin chatting.
 
@@ -51,7 +51,7 @@ This signal persists with your dictionary like every signal from the game does. 
 
 <img width="729" height="169" alt="image" src="https://github.com/user-attachments/assets/5823e19c-f085-4d8a-9c46-2eb76a3a5449" />
 
-When people send pretty visuals, you can use this to see them. Enter the ID of the message (that's the right hand side of the `callsign:messageId` in the RELAY window) into the text entry field and click VIEW.
+When people send pretty visuals, you can use this to see them. Enter the ID of the message (that's the grey number to the right of the callsign in the RELAY window) into the text entry field and click VIEW.
 
 <img width="1136" height="891" alt="image" src="https://github.com/user-attachments/assets/382485c8-87c4-4491-9713-88fa21911b66" />
 

@@ -5,7 +5,7 @@
     - [x] Some way to add signals
     - [x] Make deleting player-made signals actually delete them from dict
 - [ ] Player facing error handling
-- [ ] Handle encryption channels
+- [x] Handle encryption channels
 - [x] Handle graphs with in-game Visual tab
 - [x] Print new messages character by character
 - [x] Config

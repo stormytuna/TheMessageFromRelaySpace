@@ -35,11 +35,4 @@ public static class UnityHelpers
 
 		mesh.vertices = vertices;
 	}
-
-	/*
-	public static string RemoveCaret(this string str) {
-		return str
-			.Where(c => c.)
-	}
-	*/
 }
