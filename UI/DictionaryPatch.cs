@@ -1,3 +1,4 @@
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 
@@ -33,8 +34,17 @@ public static class DictionaryPatch
 	public static bool FullyDeleteCustomSignals(DictionaryEntry __instance) {
 		if ((__instance.id < -245 || __instance.id > -1) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))) {
 			UserDictionary.Instance.RemoveEntry(__instance.id);
-			GameObject.Destroy(__instance.gameObject);
+
+			var dictWindow = UnityHelpers.FindSingleInstanceObject<DictionaryWindow>();
+			dictWindow.entries.Remove(__instance);
+			dictWindow.entriesDict.Remove(__instance.id);
+			dictWindow.totalEntries--;
+
+			GameObject.DestroyImmediate(__instance.gameObject);
+			dictWindow.dataEntryLayout.LayoutElements(true);
+
 			UnityHelpers.FindSingleInstanceObject<Autosaver>().Autosave(PuzzleManager.Instance);
+
 			return false;
 		}
 

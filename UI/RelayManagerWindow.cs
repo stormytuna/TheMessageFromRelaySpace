@@ -547,7 +547,6 @@ public class RelayManagerWindow : InfoWindow
 		}
 	}
 
-	// TODO: Currently can't delete an entry then try remake it
 	private static void CreateNewDictEntry() {
 		if (newSignalIdInput.text.Contains('.')) {
 			popupBox.PopupWithLabel("Signal must be an integer");
