@@ -13,7 +13,7 @@ Before you install, it is highly, **highly** recommended you complete the game f
 ### Windows + Linux
 
 Install [BepInEx](https://docs.bepinex.dev/articles/user_guide/installation/index.html) as per their instructions:
-1. Download BepInEx_win_x64_5.X.X.X.zip from [BepInEx's Releases](https://github.com/BepInEx/BepInEx/releases)
+1. Download `BepInEx_win_x64_5.X.X.X.zip` from [BepInEx's Releases](https://github.com/BepInEx/BepInEx/releases)
 2. Navigate to the Game's directory through steam: Right click TMfDS -> Manage -> Browse local files
 3. Extract the downloaded file such that the `BepInEx` folder and its contents are alongside `The Message From Deep Space_Data`
 
