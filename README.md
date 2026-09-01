@@ -11,7 +11,7 @@ Install [BepInEx](https://docs.bepinex.dev/articles/user_guide/installation/inde
 - Download BepInEx_win_x64_5.X.X.X.zip from [BepInEx's Releases](https://github.com/BepInEx/BepInEx/releases)
 - Navigate to the Game's directory through steam: Right click TMfDS -> Manage -> Browse local files
 - Extract the downloaded file such that the `BepInEx` folder is alongside `The Message From Deep Space_Data`
-- LINUX ONLY: Set the game's launch command to `WINEDLLOVERRIDES="winhttp=n,b" %command%`
+- LINUX ONLY: Enable your preferred Proton version in the Compatibility section, then set the game's launch command to `WINEDLLOVERRIDES="winhttp=n,b" %command%`
 - Run the game once to setup BepInEx. After you close the game, you should see BepInEx has created a folder, `%GAMEROOT%/BepInEx/Plugins`
 
 Install the mod:
