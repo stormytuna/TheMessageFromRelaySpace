@@ -24,7 +24,7 @@ Install [BepInEx](https://docs.bepinex.dev/articles/user_guide/installation/inde
 
 Install the mod:
 1. Run the game once to setup BepInEx. After you close the game, you should see BepInEx has created a folder, `%GAMEROOT%/BepInEx/plugins`
-2. Download `TRFDS.dll` from the [releases](https://github.com/stormytuna/TheRelayFromDeepSpace/releases/latest)
+2. Download [TRFDS.dll](https://github.com/stormytuna/TheRelayFromDeepSpace/releases/latest/download/TRFDS.dll)
 3. Place the file in the `%GAMEROOT%/BepInEx/plugins` folder
 4. Run the game
 
