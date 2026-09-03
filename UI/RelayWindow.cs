@@ -210,7 +210,7 @@ public class RelayWindow
 
 	private static string GetPlaintextMessage(short sender, short transmissionId, string text, bool forceNoStartNewline = false) {
 		string leadingNewlines = (activeChannel.Count <= 1 || forceNoStartNewline) ? "" : "\n\n";
-		Color callsignColor = GetCallsignColor(sender);
+		Color callsignColor = GetCallsignColor(int.Parse(calculatorWindow.EuclideanBaseChange(sender, 8, 10)));
 		string callsign = sender.ToString().PadLeft(4, '0');
 		string transmissionNumber = transmissionId.ToString().PadLeft(3, '0');
 		return $"{leadingNewlines}<color=#{ColorUtility.ToHtmlStringRGB(callsignColor)}>{callsign}</color> <color=#{ColorUtility.ToHtmlStringRGB(Color.grey)}>{transmissionNumber}</color>\n{text}";
@@ -288,6 +288,7 @@ public class RelayWindow
 
 		var signalsToCompile = activeChannel == receivedMessages[-65536] ? relayMessageForSkeleton.Signals : relayMessageForChannel.Signals;
 
+		// TODO: DSCR, rightfully, expects numbers to be sent all in one section, but TMFDS compiles them with commas between them. Need to update this for songs to play correctly
 		var compiledOutput = CompileSignalsToString(signalsToCompile, out var compileResult);
 
 		if (activeChannel == receivedMessages[-65536] || activeChannel == receivedMessages[channel]) {

@@ -17,6 +17,7 @@ public class RelayManagerWindow : InfoWindow
 {
 	public static InfoDisplay infoDisplay;
 	public static RelaySocket relaySocket;
+	public static SongPlayer songPlayer;
 
 	private static bool initRelayButton = false;
 	private static bool initInfoDisplay = false;
@@ -35,6 +36,8 @@ public class RelayManagerWindow : InfoWindow
 	private static TextMeshPro newSignalIdInput;
 	private static TextMeshPro newSignalNameInput;
 	private static TextMeshPro messageSelectorInput;
+	private static TextMeshPro playMessageSongText;
+	private static TextMeshPro messageTimeText;
 	private static TextMeshPro currentChannelLabel;
 
 	private static CalculatorWindow calculatorWindow;
@@ -45,12 +48,18 @@ public class RelayManagerWindow : InfoWindow
 	private static Oscilloscope playerInputOscilloscope;
 	private static VisualWindow visualWindow;
 
+	// TODO: Hotkeys! How could i forgot?!
+
 	[HarmonyPatch(typeof(TabsWindow), "Open")]
 	[HarmonyPostfix]
 	public static void MakeRelayButton(TabsWindow __instance) {
 		if (initRelayButton) {
 			return;
 		}
+
+		var songPlayerObj = new GameObject("Song Player");
+		songPlayerObj.AddComponent<SongPlayer>();
+		songPlayer = songPlayerObj.GetComponent<SongPlayer>();
 
 		initRelayButton = true;
 
@@ -132,6 +141,11 @@ public class RelayManagerWindow : InfoWindow
 			} else {
 				BadCallsign();
 			}
+		});
+
+		SongPlayer.OnSongFinished.AddListener(() => {
+			playMessageSongText.text = "Play";
+			messageTimeText.text = "";
 		});
 	}
 
@@ -270,7 +284,7 @@ public class RelayManagerWindow : InfoWindow
 		rectTransform.anchoredPosition = Vector2.zero;
 		rectTransform.position = new Vector3(-30.3f, 4.83f, 0f);
 		text = messageSelectorLabel.GetComponent<TextMeshPro>();
-		text.text = "View message visuals:";
+		text.text = "Message Actions:";
 		text.textWrappingMode = TextWrappingModes.NoWrap;
 		text.overflowMode = TextOverflowModes.Overflow;
 
@@ -292,6 +306,27 @@ public class RelayManagerWindow : InfoWindow
 		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton.AddListener(ViewVisual);
 		viewMessageVisualButton.GetComponentInChildren<TextMeshPro>().text = "View";
+
+		var playMessageSongButton = GameObject.Instantiate(exampleButton).gameObject;
+		playMessageSongButton.name = "Play Relay Message Song Button";
+		playMessageSongButton.transform.SetParent(relayManagerViewport.transform);
+		playMessageSongButton.transform.position = new Vector3(-30f, 4.77f, 0.216f);
+		playMessageSongButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
+		playMessageSongButton.GetComponent<Button3D>().OnUseButton.AddListener(PlayStopSong);
+
+		playMessageSongText = playMessageSongButton.GetComponentInChildren<TextMeshPro>();
+		playMessageSongText.text = "Play";
+
+		var songDurationLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		songDurationLabel.name = "Song Duration Label";
+		songDurationLabel.transform.SetParent(relayManagerViewport.transform);
+		rectTransform = songDurationLabel.GetComponent<RectTransform>();
+		rectTransform.anchoredPosition = Vector2.zero;
+		rectTransform.position = new Vector3(-29.1f, 4.71f, 0f);
+		messageTimeText = songDurationLabel.GetComponent<TextMeshPro>();
+		messageTimeText.text = "";
+		messageTimeText.textWrappingMode = TextWrappingModes.NoWrap;
+		messageTimeText.overflowMode = TextOverflowModes.Overflow;
 
 		var changeChannelLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
 		changeChannelLabel.name = "Change Channel Label";
@@ -641,6 +676,43 @@ public class RelayManagerWindow : InfoWindow
 		RelayManagerWindow.infoDisplay.SwitchWindow(RelayManagerWindow.infoDisplay.visualWindow);
 	}
 
+	private void PlayStopSong() {
+		if (SongPlayer.IsPlaying) {
+			songPlayer.StopSong();
+			playMessageSongText.text = "Play";
+			messageTimeText.text = "";
+			return;
+		}
+
+		if (RelayWindow.receivedMessages.Count <= 0) {
+			popupBox.PopupWithLabel("No messages to try select :(");
+			return;
+		}
+
+		string selectedMessageText = messageSelectorInput.text.Trim(' ').Trim('\u200b');
+		if (!short.TryParse(selectedMessageText, out var selectedMessageId)) {
+			popupBox.PopupWithLabel("Message ID must be an integer");
+			return;
+		}
+
+		var index = RelayWindow.activeChannel.FindIndex(0, x => x.TransmissionId == selectedMessageId);
+		if (index < 0) {
+			popupBox.PopupWithLabel("Message " + selectedMessageId + " not in active channel");
+			return;
+		}
+
+		var selectedMessage = RelayWindow.activeChannel[index];
+		if (!songPlayer.TryPlaySong(selectedMessage.Signals)) {
+			popupBox.PopupWithLabel("Failed to parse song");
+			return;
+		}
+		
+		playMessageSongText.text = "Stop";
+	}
+
+	public static void SetSongDurationLabel(string durationLabel) {
+		messageTimeText.text = durationLabel;
+	}
 
 	private static void CycleChannel(int dir) {
 		currChannelIndex += dir;

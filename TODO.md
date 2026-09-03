@@ -1,0 +1,6 @@
+- [ ] Some kind of sound when messages are receieved
+- [ ] Perhaps, RELAY explanation in the REFERENCE tab
+- [ ] Hotkeys, coopt vanilla ones, show the thing on the left 
+- [ ] Music should be unavailable if the player hasnt defined -577
+- [ ] Warning popup is a little too high to be useful, it goes over the SELECT CHANNEL text, making it very difficult to read
+- [ ] Send positive numbers as whole values rather than comma separated
