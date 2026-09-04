@@ -32,7 +32,7 @@ Install the mod:
 
 After installing the mod, you will see a new `RELAY` button on the main tabs view. This is how you access the Relay.
 
-<img width="398" height="174" alt="image" src="https://github.com/user-attachments/assets/b9a3af6a-4e82-406c-9476-e31efb9439e3" />
+<img width="382" height="140" alt="image" src="https://github.com/user-attachments/assets/212a1566-370a-483c-80cb-67039cd49f01" />
 
 The `RELAY MANAGER`, `RELAY INPUT`, and `RELAY` screens are how you interact with the Relay. The `RELAY MANAGER` screen is daunting at first, but all of the features are explaiend in the [Features](README.md#Features) section below.
 
