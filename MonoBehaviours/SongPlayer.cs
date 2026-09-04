@@ -3,6 +3,7 @@ using UnityEngine;
 using TRFDS.DataStructures;
 using UnityEngine.Events;
 using TRFDS.UI;
+using TRFDS.Helpers;
 
 namespace TRFDS.MonoBehaviours;
 
@@ -18,14 +19,19 @@ public class SongPlayer : MonoBehaviour
 	private AudioSource audioSource;
 
 	private MusicNote[] currentSong;
+	private double volume;
+	private int samplePosition;
+	private double[] phases;
 	private int outputSampleRate;
 	private double songStartTime;
 	private double songEndTime;
-	private double[] phases;
+
+	private VolumeManager volumeManager;
 
 	private void Awake() {
 		Instance = this;
 		audioSource = gameObject.AddComponent<AudioSource>();
+		volumeManager = UnityHelpers.FindSingleInstanceObject<VolumeManager>();
 	}
 
 	public bool TryPlaySong(SignalMessage message) {
@@ -39,6 +45,8 @@ public class SongPlayer : MonoBehaviour
 
 	private void PlaySong(MusicNote[] notes) {
 		currentSong = notes;
+		volume = volumeManager.sfxUI.level / 100f;
+		samplePosition = 0;
 		phases = new double[notes.Length];
 
 		outputSampleRate = AudioSettings.outputSampleRate;
@@ -54,12 +62,14 @@ public class SongPlayer : MonoBehaviour
 		songEndTime = songStartTime + songEndOffset;
 
 		IsPlaying = true;
+		MusicManager.Instance.PauseNormalMusic();
 		audioSource.Play();
 	}
 
 	public void StopSong() {
 		IsPlaying = false;
 		audioSource.Stop();
+		MusicManager.Instance.ResumeNormalMusic();
 	}
 
 	private void Update() {
@@ -67,6 +77,7 @@ public class SongPlayer : MonoBehaviour
 			audioSource.Stop();
 			IsPlaying = false;
 			OnSongFinished.Invoke();
+			MusicManager.Instance.ResumeNormalMusic();
 		}
 
 		if (IsPlaying) {
@@ -80,44 +91,46 @@ public class SongPlayer : MonoBehaviour
 	}
 
 	private void OnAudioFilterRead(float[] data, int channels) {
+		if (!IsPlaying) {
+			return;
+		}
+
 		for (int i = 0; i < data.Length; i += channels) {
-			double time = AudioSettings.dspTime - songStartTime;
+			double time = (double)samplePosition / outputSampleRate;
+			double output = 0.0;
 
-			double output = 0f;
-			int numNotes = 0;
-
-            for (int n = 0; n < currentSong.Length; n++) {
-                MusicNote note = currentSong[n];
-
+			for (int n = 0; n < currentSong.Length; n++) {
+				MusicNote note = currentSong[n];
 				double noteTime = time - note.StartTime;
 
-                if (noteTime > 0f && noteTime < note.Duration) {
-					double amplitude = 0.5f;
+				if (noteTime >= 0.0 && noteTime < note.Duration) {
+					double amplitude = 0.5;
 
-					double noteTimeLeft = note.Duration - noteTime;
-					if (noteTime < FadeTime) {
-						amplitude *= Math.Pow(noteTime / FadeTime, 2);
-					} else if (noteTimeLeft < FadeTime) {
-						amplitude *= Math.Pow(noteTimeLeft / FadeTime, 2);
+					if (FadeTime > 0.0) {
+						double fadeIn = Math.Min(noteTime / FadeTime, 1.0);
+						double fadeOut = Math.Min((note.Duration - noteTime) / FadeTime, 1.0);
+
+						amplitude *= fadeIn * fadeIn;
+						amplitude *= fadeOut * fadeOut;
 					}
 
 					output += Math.Sin(phases[n]) * amplitude;
 
-					phases[n] += (note.Frequency * Math.PI * 2f) / outputSampleRate;
+					phases[n] += note.Frequency * Math.PI * 2.0 / outputSampleRate;
 
-					if (phases[n] > Math.PI * 2.0) {
+					if (phases[n] >= Math.PI * 2.0) {
 						phases[n] -= Math.PI * 2.0;
 					}
-
-					numNotes++;
 				}
 			}
 
-			output /= (numNotes == 0 ? 1 : numNotes);
+			output *= 0.2 * volume;
 
 			for (int j = 0; j < channels; j++) {
-				data[i + j] = (float)output;
+				data[i + j] += (float)output;
 			}
+
+			samplePosition++;
 		}
 	}
 }

@@ -1,6 +1,8 @@
 using System.Linq;
 using UnityEngine;
 
+namespace TRFDS.Helpers;
+
 public static class UnityHelpers
 {
 	public static T FindSingleInstanceObject<T>() where T : MonoBehaviour {

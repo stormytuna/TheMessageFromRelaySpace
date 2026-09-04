@@ -9,6 +9,7 @@ using TRFDS.MonoBehaviours;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using TRFDS.Helpers;
 
 namespace TRFDS.UI;
 
@@ -140,11 +141,17 @@ public class RelayWindow
 		var compiler = ConsoleDisplay.Instance.compiler;
 
 		if (TRFDSPlugin.ShortenVisuals.Value) {
-			for (int i = 0; i < signalMessage.signals.Length - 1; i++) {
-				if (signalMessage.signals[i] == -53 && signalMessage.signals.ElementAtOrDefault(i + 1) == -14) {
-					var newSignals = signalMessage.signals.Take(i + 2).Concat([-25, -15]);
+			for (int i = 0; i < signalMessage.signals.Length; i++) {
+				bool isVisual = signalMessage.signals[i] == -53 && signalMessage.signals.ElementAtOrDefault(i + 1) == -14;
+				bool isSong = signalMessage.signals[i] == -577 && signalMessage.signals.ElementAtOrDefault(i + 1) == -14; // TODO: Only if song is defined
+				if (isVisual || isSong) {
+					int endIndex = RelayHelpers.FindClosingBraceIndex(signalMessage.signals, i + 1);
+					if (endIndex < 0) {
+						continue;
+					}
+
+					var newSignals = signalMessage.signals.Take(i + 2).Concat([-25]).Concat(signalMessage.signals.Skip(endIndex));
 					signalMessage.signals = newSignals.ToArray();
-					break;
 				}
 			}
 		}

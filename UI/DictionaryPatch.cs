@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using TRFDS.Helpers;
 using UnityEngine;
 
 namespace TRFDS.UI;

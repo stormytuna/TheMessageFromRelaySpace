@@ -9,6 +9,7 @@ using UnityEngine.Events;
 using Random = UnityEngine.Random;
 using System.IO;
 using System.Reflection;
+using TRFDS.Helpers;
 
 namespace TRFDS.UI;
 
@@ -36,6 +37,7 @@ public class RelayManagerWindow : InfoWindow
 	private static TextMeshPro newSignalIdInput;
 	private static TextMeshPro newSignalNameInput;
 	private static TextMeshPro messageSelectorInput;
+	private static GameObject playMessageSongButton;
 	private static TextMeshPro playMessageSongText;
 	private static TextMeshPro messageTimeText;
 	private static TextMeshPro currentChannelLabel;
@@ -47,8 +49,6 @@ public class RelayManagerWindow : InfoWindow
 	private static PuzzleCounter puzzleCounter;
 	private static Oscilloscope playerInputOscilloscope;
 	private static VisualWindow visualWindow;
-
-	// TODO: Hotkeys! How could i forgot?!
 
 	[HarmonyPatch(typeof(TabsWindow), "Open")]
 	[HarmonyPostfix]
@@ -307,7 +307,7 @@ public class RelayManagerWindow : InfoWindow
 		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton.AddListener(ViewVisual);
 		viewMessageVisualButton.GetComponentInChildren<TextMeshPro>().text = "View";
 
-		var playMessageSongButton = GameObject.Instantiate(exampleButton).gameObject;
+		playMessageSongButton = GameObject.Instantiate(exampleButton).gameObject;
 		playMessageSongButton.name = "Play Relay Message Song Button";
 		playMessageSongButton.transform.SetParent(relayManagerViewport.transform);
 		playMessageSongButton.transform.position = new Vector3(-30f, 4.77f, 0.216f);
@@ -441,6 +441,12 @@ public class RelayManagerWindow : InfoWindow
 		if (!loadEnabledChannels) {
 			LoadEnabledChannels();
 			loadEnabledChannels = true;
+		}
+
+		if (UserDictionary.Instance.terms.ContainsKey(-577)) {
+			ShowSongStuff();
+		} else {
+			HideSongStuff();
 		}
 
 		if (RelaySocket.Callsign == null) {
@@ -625,6 +631,10 @@ public class RelayManagerWindow : InfoWindow
 			newSignalIdInput.text = "-";
 			newSignalNameInput.text = "";
 			autosaver.Autosave(PuzzleManager.Instance);
+
+			if (signalId == -577) {
+				ShowSongStuff();
+			}
 		} else {
 			// Should never happen, but just in case, let the user know it didn't work
 			popupBox.PopupWithLabel("Failed to add signal");
@@ -712,6 +722,14 @@ public class RelayManagerWindow : InfoWindow
 
 	public static void SetSongDurationLabel(string durationLabel) {
 		messageTimeText.text = durationLabel;
+	}
+
+	private static void HideSongStuff() {
+		playMessageSongButton.SetActive(false);
+	}
+
+	private static void ShowSongStuff() {
+		playMessageSongButton.SetActive(true);
 	}
 
 	private static void CycleChannel(int dir) {
