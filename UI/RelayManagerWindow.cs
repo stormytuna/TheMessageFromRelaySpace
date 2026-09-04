@@ -41,6 +41,7 @@ public class RelayManagerWindow : InfoWindow
 	private static TextMeshPro playMessageSongText;
 	private static TextMeshPro messageTimeText;
 	private static TextMeshPro currentChannelLabel;
+	private static List<GameObject> hiddenUntilLoggedIn = new List<GameObject>();
 
 	private static CalculatorWindow calculatorWindow;
 	private static PopupBox popupBox;
@@ -135,6 +136,10 @@ public class RelayManagerWindow : InfoWindow
 		puzzleCounter = UnityHelpers.FindSingleInstanceObject<PuzzleCounter>();
 		playerInputOscilloscope = GameObject.Find("Input Oscilloscope").GetComponent<Oscilloscope>();
 
+		foreach (var obj in hiddenUntilLoggedIn) {
+			obj.SetActive(false);
+		}
+
 		HotkeyManager.Instance.SetButtonHotkeyDictionary();
 
 		RelaySocket.CallsignProcessed.AddListener((goodCallsign) => {
@@ -198,6 +203,7 @@ public class RelayManagerWindow : InfoWindow
 
 		var respondButton = ConsoleDisplay.Instance.readMessageGroup.transform.Find("Respond Button");
 		switchToInputButton = GameObject.Instantiate(respondButton).gameObject;
+		hiddenUntilLoggedIn.Add(switchToInputButton);
 		switchToInputButton.name = "Relay Input Button";
 		switchToInputButton.transform.SetParent(relayManagerViewport.transform);
 		switchToInputButton.transform.position = new Vector3(-29.38f, 5.675f, 0.25f);
@@ -215,6 +221,7 @@ public class RelayManagerWindow : InfoWindow
 		switchToInputText.position += Vector3.right * 0.0325f;
 
 		var newSignalsLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		hiddenUntilLoggedIn.Add(newSignalsLabel);
 		newSignalsLabel.name = "New Signals Label";
 		newSignalsLabel.transform.SetParent(relayManagerViewport.transform);
 		rectTransform = newSignalsLabel.GetComponent<RectTransform>();
@@ -226,6 +233,7 @@ public class RelayManagerWindow : InfoWindow
 		text.overflowMode = TextOverflowModes.Overflow;
 
 		var signalIdLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		hiddenUntilLoggedIn.Add(signalIdLabel);
 		signalIdLabel.name = "Signal ID Label";
 		signalIdLabel.transform.SetParent(relayManagerViewport.transform);
 		rectTransform = signalIdLabel.GetComponent<RectTransform>();
@@ -237,6 +245,7 @@ public class RelayManagerWindow : InfoWindow
 		text.overflowMode = TextOverflowModes.Overflow;
 
 		var signalNameLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		hiddenUntilLoggedIn.Add(signalNameLabel);
 		signalNameLabel.name = "Signal Name Label";
 		signalNameLabel.transform.SetParent(relayManagerViewport.transform);
 		rectTransform = signalNameLabel.GetComponent<RectTransform>();
@@ -251,6 +260,7 @@ public class RelayManagerWindow : InfoWindow
 			.First(x => x.name == "Name Input");
 		
 		var newSignalId = GameObject.Instantiate(calculatorWindow.operand1.gameObject);
+		hiddenUntilLoggedIn.Add(newSignalId);
 		newSignalId.name = "New Signal ID Input";
 		newSignalId.transform.SetParent(relayManagerViewport.transform);
 		newSignalId.transform.position = new Vector3(-30.755f, 5.1f, 0.22f);
@@ -262,6 +272,7 @@ public class RelayManagerWindow : InfoWindow
 		newSignalIdInput.transform.localPosition = new Vector3(0.3503f, -0.2237f, -0.59f);
 
 		var newSignalName = GameObject.Instantiate(calculatorWindow.operand1.gameObject);
+		hiddenUntilLoggedIn.Add(newSignalName);
 		newSignalName.name = "New Signal Name Input";
 		newSignalName.transform.SetParent(relayManagerViewport.transform);
 		newSignalName.transform.position = new Vector3(-29.95f, 5.1f, 0.22f);
@@ -273,7 +284,8 @@ public class RelayManagerWindow : InfoWindow
 		newSignalNameInput.text = "";
 		newSignalNameInput.transform.localPosition = new Vector3(0.25f, -0.2237f, -0.59f);
 
-		var makeNewSignalButton = GameObject.Instantiate(exampleButton);
+		var makeNewSignalButton = GameObject.Instantiate(exampleButton).gameObject;
+		hiddenUntilLoggedIn.Add(makeNewSignalButton);
 		makeNewSignalButton.name = "Make New Dict Entry Button";
 		makeNewSignalButton.transform.SetParent(relayManagerViewport.transform);
 		makeNewSignalButton.transform.position = new Vector3(-29.3f, 5.1f, 0.216f);
@@ -282,6 +294,7 @@ public class RelayManagerWindow : InfoWindow
 		makeNewSignalButton.GetComponentInChildren<TextMeshPro>().text = "Make";
 
 		var messageSelectorLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		hiddenUntilLoggedIn.Add(messageSelectorLabel);
 		messageSelectorLabel.name = "Message Select Label";
 		messageSelectorLabel.transform.SetParent(relayManagerViewport.transform);
 		rectTransform = messageSelectorLabel.GetComponent<RectTransform>();
@@ -293,6 +306,7 @@ public class RelayManagerWindow : InfoWindow
 		text.overflowMode = TextOverflowModes.Overflow;
 
 		var messageSelectorInputObj = GameObject.Instantiate(calculatorWindow.operand1.gameObject);
+		hiddenUntilLoggedIn.Add(messageSelectorInputObj);
 		messageSelectorInputObj.name = "Relay Message Selector Input";
 		messageSelectorInputObj.transform.SetParent(relayManagerViewport.transform);
 		messageSelectorInputObj.transform.position = new Vector3(-30.83f, 4.77f, 0.22f);
@@ -303,7 +317,8 @@ public class RelayManagerWindow : InfoWindow
 		messageSelectorInput.text = "";
 		messageSelectorInput.transform.position = new Vector3(-30.2f, 4.73f, 0.2141f);
 		
-		var viewMessageVisualButton = GameObject.Instantiate(exampleButton);
+		var viewMessageVisualButton = GameObject.Instantiate(exampleButton).gameObject;
+		hiddenUntilLoggedIn.Add(viewMessageVisualButton);
 		viewMessageVisualButton.name = "View Relay Message Visual Button";
 		viewMessageVisualButton.transform.SetParent(relayManagerViewport.transform);
 		viewMessageVisualButton.transform.position = new Vector3(-30.4f, 4.77f, 0.216f);
@@ -312,6 +327,7 @@ public class RelayManagerWindow : InfoWindow
 		viewMessageVisualButton.GetComponentInChildren<TextMeshPro>().text = "View";
 
 		playMessageSongButton = GameObject.Instantiate(exampleButton).gameObject;
+		hiddenUntilLoggedIn.Add(playMessageSongButton);
 		playMessageSongButton.name = "Play Relay Message Song Button";
 		playMessageSongButton.transform.SetParent(relayManagerViewport.transform);
 		playMessageSongButton.transform.position = new Vector3(-30f, 4.77f, 0.216f);
@@ -333,6 +349,7 @@ public class RelayManagerWindow : InfoWindow
 		messageTimeText.overflowMode = TextOverflowModes.Overflow;
 
 		var changeChannelLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		hiddenUntilLoggedIn.Add(changeChannelLabel);
 		changeChannelLabel.name = "Change Channel Label";
 		changeChannelLabel.transform.SetParent(relayManagerViewport.transform);
 		rectTransform = changeChannelLabel.GetComponent<RectTransform>();
@@ -343,7 +360,8 @@ public class RelayManagerWindow : InfoWindow
 		text.textWrappingMode = TextWrappingModes.NoWrap;
 		text.overflowMode = TextOverflowModes.Overflow;
 
-		var channelLeftButton = GameObject.Instantiate(exampleButton);
+		var channelLeftButton = GameObject.Instantiate(exampleButton).gameObject;
+		hiddenUntilLoggedIn.Add(channelLeftButton);
 		channelLeftButton.name = "Cycle Channel Left Button";
 		channelLeftButton.transform.SetParent(relayManagerViewport.transform);
 		channelLeftButton.transform.position = new Vector3(-30.89f, 4.45f, 0.216f);
@@ -353,7 +371,8 @@ public class RelayManagerWindow : InfoWindow
 		UnityHelpers.ScaleMeshVertices(channelLeftButton.GetComponent<MeshFilter>().mesh, 0.5f);
 		channelLeftButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.5f;
 
-		var channelRightButton = GameObject.Instantiate(exampleButton);
+		var channelRightButton = GameObject.Instantiate(exampleButton).gameObject;
+		hiddenUntilLoggedIn.Add(channelRightButton);
 		channelRightButton.name = "Cycle Channel Right Button";
 		channelRightButton.transform.SetParent(relayManagerViewport.transform);
 		channelRightButton.transform.position = new Vector3(-29.58f, 4.45f, 0.216f);
@@ -364,6 +383,7 @@ public class RelayManagerWindow : InfoWindow
 		channelRightButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.5f;
 
 		var currentChannelLabelObj = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
+		hiddenUntilLoggedIn.Add(currentChannelLabelObj);
 		currentChannelLabelObj.name = "Current Channel Label";
 		currentChannelLabelObj.transform.SetParent(relayManagerViewport.transform);
 		rectTransform = currentChannelLabelObj.GetComponent<RectTransform>();
@@ -453,12 +473,6 @@ public class RelayManagerWindow : InfoWindow
 			loadEnabledChannels = true;
 		}
 
-		if (UserDictionary.Instance.terms.ContainsKey(-577)) {
-			ShowSongStuff();
-		} else {
-			HideSongStuff();
-		}
-
 		if (RelaySocket.Callsign == null) {
 			relayManagerViewport.SetActive(true);
 		}
@@ -504,6 +518,16 @@ public class RelayManagerWindow : InfoWindow
 		switchToInputButton.SetActive(true);
 		popupBox.PopupWithLabel("Callsign set to " + callsignInput.label.text);
 		puzzleCounter.StartCoroutine(puzzleCounter.UpdateCounterRoutine(currCallsignBase8, 0f));
+
+		foreach (var obj in hiddenUntilLoggedIn) {
+			obj.SetActive(true);
+		}
+
+		if (UserDictionary.Instance.terms.ContainsKey(-577)) {
+			ShowSongStuff();
+		} else {
+			HideSongStuff();
+		}
 	}
 
 	public static void BadCallsign() {
@@ -515,6 +539,11 @@ public class RelayManagerWindow : InfoWindow
 
 		if (RelayManagerWindow.relaySocket == null) {
 			return;
+		}
+
+		HideSongStuff();
+		foreach (var obj in hiddenUntilLoggedIn) {
+			obj.SetActive(false);
 		}
 
 		puzzleCounter.StartCoroutine(puzzleCounter.UpdateCounterRoutine(PuzzleManager.Instance.TotalPuzzleID + 1, 0f));

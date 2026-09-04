@@ -2,7 +2,7 @@
 - [ ] Perhaps, RELAY explanation in the REFERENCE tab
 - [x] Hotkeys, coopt vanilla ones, show the thing on the left 
 - [x] Music should be unavailable if the player hasnt defined -577
-- [ ] Most MANAGER screen things should only be available if the player is logged in to the relay
+- [x] Most MANAGER screen things should only be available if the player is logged in to the relay
 - [ ] Warning popup is a little too high to be useful, it goes over the SELECT CHANNEL text, making it very difficult to read
 - [ ] Send positive numbers as whole values rather than comma separated
 - [ ] Scrollable left hand side input
