@@ -7,10 +7,14 @@ TRfDS is in beta currently. Expect things to break.
 ## Installation
 Before you install, it is highly, **highly** recommended you complete the game first!
 
+### Thunderstore
+
+The mod is available on [Thunderstore!](https://thunderstore.io/c/the-message-from-deep-space/p/stormytuna/The_Relay_from_Deep_Space/)
+
+### Manual (Windows + Linux)
+
 > [!IMPORTANT]
 > Using Linux? That's fine! For manual installation, please follow the guide exactly. The Message from Deep Space has no Linux version, so all Linux computers run the Windows version through Proton. Follow the Windows installation instructions below, plus the extra step for Linux only.
-
-### Windows + Linux
 
 Install [BepInEx](https://docs.bepinex.dev/articles/user_guide/installation/index.html) as per their instructions:
 1. Download `BepInEx_win_x64_5.X.X.X.zip` from [BepInEx's Releases](https://github.com/BepInEx/BepInEx/releases)
