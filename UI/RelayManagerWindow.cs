@@ -31,6 +31,7 @@ public class RelayManagerWindow : InfoWindow
 	private static GameObject relayManagerViewport;
 	private static GameObject relayInputViewport;
 	private static InfoWindow relayManagerWindow;
+	private static ScrollBar3D relayInputScrollBar;
 	private static SimpleWriter callsignInput;
 	private static TextMeshPro relayInput;
 	private static GameObject switchToInputButton;
@@ -413,6 +414,21 @@ public class RelayManagerWindow : InfoWindow
 		relayInput = relayInputObj.GetComponent<TextMeshPro>();
 		relayInput.fontSize = 0.9f;
 		relayInputObj.GetComponent<InputDisplaySelector>().tInput = relayInput;
+		relayInputObj.GetComponent<InputDisplaySelector>().charsLength = 9999;
+
+		var relayInputScrollBarObj = GameObject.Instantiate(ConsoleDisplay.Instance.responseGroup.transform.Find("Scroll Bar").gameObject);
+		relayInputScrollBarObj.transform.SetParent(relayInputViewport.transform);
+		relayInputScrollBarObj.name = "Relay Input Scrollbar";
+
+		relayInputScrollBar = relayInputScrollBarObj.GetComponentInChildren<ScrollBar3D>();
+		relayInputScrollBar.name = "Relay Input Scroll Handle";
+		relayInputScrollBar.visuals = relayInputScrollBar.transform.Find("Scroll Visuals").gameObject;
+		relayInputScrollBar.col = relayInputScrollBar.GetComponent<BoxCollider>();
+		relayInputScrollBar.meshRenderer = relayInputScrollBar.GetComponentInChildren<MeshRenderer>();
+		relayInputScrollBar.scrollArea = relayInputObj.gameObject;
+
+		relayInputObj.scrollArea = relayInputObj.GetComponent<ScrollArea>();
+		relayInputObj.scrollBar = relayInputScrollBar;
 
 		var respondButton = ConsoleDisplay.Instance.readMessageGroup.transform.Find("Respond Button");
 		var sendMessageButton = GameObject.Instantiate(respondButton);
@@ -450,7 +466,6 @@ public class RelayManagerWindow : InfoWindow
 		managerText.position += Vector3.right * 0.0355f;
 	}
 
-
 	[HarmonyPatch(typeof(WorldSpaceClicker), "ScanForHitbox")]
 	[HarmonyPostfix]
 	public static void HandleInput(WorldSpaceClicker __instance) {
@@ -469,6 +484,14 @@ public class RelayManagerWindow : InfoWindow
 			return;
 		} else if (TextDummyManager.Instance_Float.InputField.inputValidator is not FloatInputValidator) {
 			TextDummyManager.Instance_Float.InputField.inputValidator = ScriptableObject.CreateInstance<FloatInputValidator>();
+		}
+	}
+
+	[HarmonyPatch(typeof(WorldSpaceClicker), nameof(WorldSpaceClicker.ObjectIsRightSide))]
+	[HarmonyPostfix]
+	public static void ForceInputScrollbarToLeftMonitor(GameObject go, ref bool __result) {
+		if (go == relayInputScrollBar?.gameObject) {
+			__result = false;
 		}
 	}
 

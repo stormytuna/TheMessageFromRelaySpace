@@ -5,10 +5,11 @@
 - [x] Most MANAGER screen things should only be available if the player is logged in to the relay
 - [ ] Warning popup is a little too high to be useful, it goes over the SELECT CHANNEL text, making it very difficult to read
 - [ ] Send positive numbers as whole values rather than comma separated
-- [ ] Scrollable left hand side input
-    - [ ] Also remove limit on how many chars can be input
+- [x] Scrollable left hand side input
+    - [x] Also remove limit on how many chars can be input
 - [ ] COPY button on manager screen, requires a little tinkering to get everything to fit
 - [x] Make playing a song pause the current music, then play it when it's finished
 - [x] Make songs use SFX volume
 - [x] Tweak how song data is created, it crackles and multiple notes sound strange
-- [ ] Lock the relay behind something. Finishing the game, or enabling a config
+- [x] Lock the relay behind something. Finishing the game, or enabling a config
+- [ ] Logs that make the Relay "canon" and a bit more part of the game, rather than a supplementary thing

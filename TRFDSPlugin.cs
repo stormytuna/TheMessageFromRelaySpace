@@ -58,11 +58,11 @@ public class TRFDSPlugin : BaseUnityPlugin
 		RelayTypingDelay = Config.Bind(section, key, 0.04f, description);
 
 		key = "RelayTypeCharByCharCutoff";
-		description = "The amount of characters a message must be under to be typed character-by-character. Messages with a length longer than this are types either line-by-line or instantly. Does nothing if you set RelayTypingDelay to 0";
+		description = "The amount of characters a message must be under to be typed character-by-character. Messages with a length longer than this are typed either line-by-line or instantly. Does nothing if you set RelayTypingDelay to 0";
 		RelayTypeCharByCharCutoff = Config.Bind(section, key, 32, description);
 
 		key = "RelayTypeLineByLineCutoff";
-		description = "The amount of characters a message must be under to be typed line-by-line. Messages with a length longer than this are types instantly. Does nothing if you set RelayTypingDelay to 0";
+		description = "The amount of characters a message must be under to be typed line-by-line. Messages with a length longer than this are typed instantly. Does nothing if you set RelayTypingDelay to 0";
 		RelayTypeLineByLineCutoff = Config.Bind(section, key, 128, description);
 
 		section = "Relay";
