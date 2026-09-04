@@ -313,7 +313,6 @@ public class RelayWindow
 			}
 
 			if (!isInitialMessage && senderBase10.ToString() != RelaySocket.Callsign) {
-				TRFDSPlugin.Logger.LogInfo("We are inside");
 				overheadLight.winLoseAS.clip = overheadLight.winClip;
 				overheadLight.winLoseAS.Play();
 			}

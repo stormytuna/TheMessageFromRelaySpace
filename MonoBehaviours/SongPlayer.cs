@@ -85,7 +85,7 @@ public class SongPlayer : MonoBehaviour
 			double currentDur = AudioSettings.dspTime - songStartTime;
 			var totalDurTime = TimeSpan.FromSeconds(totalDur);
 			var currentDurTime = TimeSpan.FromSeconds(currentDur);
-			var text = $"{currentDurTime.ToString(@"mm\:ss")} | {totalDurTime.ToString(@"mm\:ss")}";
+			var text = $"{currentDurTime.ToString(@"m\:ss")}|{totalDurTime.ToString(@"m\:ss")}";
 			RelayManagerWindow.SetSongDurationLabel(text);
 		}
 	}

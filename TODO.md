@@ -6,7 +6,7 @@
 - [ ] Send positive numbers as whole values rather than comma separated
 - [x] Scrollable left hand side input
     - [x] Also remove limit on how many chars can be input
-- [ ] COPY button on manager screen, requires a little tinkering to get everything to fit
+- [x] COPY button on manager screen, requires a little tinkering to get everything to fit
 - [x] Make playing a song pause the current music, then play it when it's finished
 - [x] Make songs use SFX volume
 - [x] Tweak how song data is created, it crackles and multiple notes sound strange

@@ -322,23 +322,38 @@ public class RelayManagerWindow : InfoWindow
 		messageSelectorInput = messageSelectorInputObj.GetComponentInChildren<TextMeshPro>();
 		messageSelectorInput.text = "";
 		messageSelectorInput.transform.position = new Vector3(-30.2f, 4.73f, 0.2141f);
+
+		var copyMessageSignalsButton = GameObject.Instantiate(exampleButton).gameObject;
+		hiddenUntilLoggedIn.Add(copyMessageSignalsButton);
+		copyMessageSignalsButton.name = "Copy Relay Message Signals Button";
+		copyMessageSignalsButton.transform.SetParent(relayManagerViewport.transform);
+		copyMessageSignalsButton.transform.position = new Vector3(-30.5f, 4.77f, 0.216f);
+		copyMessageSignalsButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
+		copyMessageSignalsButton.GetComponent<Button3D>().OnUseButton.AddListener(CopySignals);
+		copyMessageSignalsButton.GetComponentInChildren<TextMeshPro>().text = "Copy";
+		RelayHelpers.AddHotkey(copyMessageSignalsButton, KeyCode.LeftControl, KeyCode.C);
+		RelayHelpers.AddHotkey(copyMessageSignalsButton, KeyCode.RightControl, KeyCode.C);
 		
 		var viewMessageVisualButton = GameObject.Instantiate(exampleButton).gameObject;
 		hiddenUntilLoggedIn.Add(viewMessageVisualButton);
 		viewMessageVisualButton.name = "View Relay Message Visual Button";
 		viewMessageVisualButton.transform.SetParent(relayManagerViewport.transform);
-		viewMessageVisualButton.transform.position = new Vector3(-30.4f, 4.77f, 0.216f);
+		viewMessageVisualButton.transform.position = new Vector3(-30.16f, 4.77f, 0.216f);
 		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton.AddListener(ViewVisual);
 		viewMessageVisualButton.GetComponentInChildren<TextMeshPro>().text = "View";
+		RelayHelpers.AddHotkey(viewMessageVisualButton, KeyCode.LeftControl, KeyCode.V);
+		RelayHelpers.AddHotkey(viewMessageVisualButton, KeyCode.RightControl, KeyCode.V);
 
 		playMessageSongButton = GameObject.Instantiate(exampleButton).gameObject;
 		hiddenUntilLoggedIn.Add(playMessageSongButton);
 		playMessageSongButton.name = "Play Relay Message Song Button";
 		playMessageSongButton.transform.SetParent(relayManagerViewport.transform);
-		playMessageSongButton.transform.position = new Vector3(-30f, 4.77f, 0.216f);
+		playMessageSongButton.transform.position = new Vector3(-29.822f, 4.77f, 0.216f);
 		playMessageSongButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		playMessageSongButton.GetComponent<Button3D>().OnUseButton.AddListener(PlayStopSong);
+		RelayHelpers.AddHotkey(playMessageSongButton, KeyCode.LeftControl, KeyCode.P);
+		RelayHelpers.AddHotkey(playMessageSongButton, KeyCode.RightControl, KeyCode.P);
 
 		playMessageSongText = playMessageSongButton.GetComponentInChildren<TextMeshPro>();
 		playMessageSongText.text = "Play";
@@ -348,7 +363,7 @@ public class RelayManagerWindow : InfoWindow
 		songDurationLabel.transform.SetParent(relayManagerViewport.transform);
 		rectTransform = songDurationLabel.GetComponent<RectTransform>();
 		rectTransform.anchoredPosition = Vector2.zero;
-		rectTransform.position = new Vector3(-29.1f, 4.71f, 0f);
+		rectTransform.position = new Vector3(-28.95f, 4.71f, 0f);
 		messageTimeText = songDurationLabel.GetComponent<TextMeshPro>();
 		messageTimeText.text = "";
 		messageTimeText.textWrappingMode = TextWrappingModes.NoWrap;
@@ -708,6 +723,50 @@ public class RelayManagerWindow : InfoWindow
 			// Should never happen, but just in case, let the user know it didn't work
 			popupBox.PopupWithLabel("Failed to add signal");
 		}
+	}
+
+	private void CopySignals() {
+		if (RelayWindow.receivedMessages.Count <= 0) {
+			popupBox.PopupWithLabel("No messages to try select :(");
+			return;
+		}
+
+		string selectedMessageText = messageSelectorInput.text.Trim(' ').Trim('\u200b');
+		if (!short.TryParse(selectedMessageText, out var selectedMessageId)) {
+			popupBox.PopupWithLabel("Message ID must be an integer");
+			return;
+		}
+
+		var index = RelayWindow.activeChannel.FindIndex(0, x => x.TransmissionId == selectedMessageId);
+		if (index < 0) {
+			popupBox.PopupWithLabel("Message " + selectedMessageId + " not in active channel");
+			return;
+		}
+
+		// TODO: Ctrl click to just add signals
+		var selectedMessage = RelayWindow.activeChannel[index];
+		if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) {
+			string signals = string.Join(' ', selectedMessage.Signals.signals);
+			GUIUtility.systemCopyBuffer = signals;
+			popupBox.PopupWithLabel("Copied signals");
+			return;
+		}
+
+		var compileResult = new CompilerResult();
+		var compiledMessage = ConsoleDisplay.Instance.compiler.CompileSignalToString(selectedMessage.Signals, ref compileResult);
+
+		string compiledOutput = "";
+		for (int i = 0; i < compiledMessage.Count; i++) {
+			if (i == compiledMessage.Count - 1) {
+				compiledOutput += compiledMessage[i];
+			}
+			else {
+				compiledOutput += compiledMessage[i] + "\n";
+			}
+		}
+
+		GUIUtility.systemCopyBuffer = compiledOutput.ToUpper();
+		popupBox.PopupWithLabel("Copied message");
 	}
 
 	private void ViewVisual() {
