@@ -32,6 +32,7 @@ public class RelayWindow
 
 	private static CalculatorWindow calculatorWindow;
 	private static Oscilloscope relayOutputOscilloscope;
+	private static OverheadLight overheadLight;
 
 	[HarmonyPatch(typeof(ConsoleDisplay), "Awake")]
 	[HarmonyPostfix]
@@ -95,6 +96,7 @@ public class RelayWindow
 		lineHeight = totalDisplayHeight / LinesPerPage;
 
 		relayOutputOscilloscope = GameObject.Find("Output Oscilloscope").GetComponent<Oscilloscope>();
+		overheadLight = GameObject.Find("Overhead Light").GetComponent<OverheadLight>();
 
 		RelaySocket.CallsignProcessed.AddListener((goodCallsign) => {
 			if (goodCallsign) {
@@ -253,7 +255,7 @@ public class RelayWindow
 		}
 
 		// Relay sends the last 10 messages before you connected, so these should print quickly
-		bool isInitialMessage = receivedMessages.Count < 10;
+		bool isInitialMessage = receivedMessages.Where(x => x.Key != -65536).SelectMany(x => x.Value).Count() < 10;
 		if (isInitialMessage) {
 			byChar = false;
 			if (TRFDSPlugin.ShowInitialMessagesInstantly.Value) {
@@ -300,7 +302,6 @@ public class RelayWindow
 
 		var signalsToCompile = activeChannel == receivedMessages[-65536] ? relayMessageForSkeleton.Signals : relayMessageForChannel.Signals;
 
-		// TODO: DSCR, rightfully, expects numbers to be sent all in one section, but TMFDS compiles them with commas between them. Need to update this for songs to play correctly
 		var compiledOutput = CompileSignalsToString(signalsToCompile, out var compileResult);
 
 		if (activeChannel == receivedMessages[-65536] || activeChannel == receivedMessages[channel]) {
@@ -309,6 +310,12 @@ public class RelayWindow
 
 			if (TRFDSPlugin.Oscilloscopes.Value) {
 				relayOutputOscilloscope.PlaySignal(signalMessage, true);
+			}
+
+			if (!isInitialMessage && senderBase10.ToString() != RelaySocket.Callsign) {
+				TRFDSPlugin.Logger.LogInfo("We are inside");
+				overheadLight.winLoseAS.clip = overheadLight.winClip;
+				overheadLight.winLoseAS.Play();
 			}
 		}
 	}
