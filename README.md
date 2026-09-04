@@ -32,7 +32,7 @@ Install the mod:
 
 After installing the mod, you will see a new `RELAY` button on the main tabs view. This is how you access the Relay.
 
-<img width="382" height="140" alt="image" src="https://github.com/user-attachments/assets/212a1566-370a-483c-80cb-67039cd49f01" />
+<img width="355" height="118" alt="image" src="https://github.com/user-attachments/assets/3b9eb9be-83cd-4c96-ade5-31f554ac146f" />
 
 The `RELAY MANAGER`, `RELAY INPUT`, and `RELAY` screens are how you interact with the Relay. The `RELAY MANAGER` screen is daunting at first, but all of the features are explaiend in the [Features](README.md#Features) section below.
 
@@ -58,7 +58,7 @@ This signal persists with your dictionary like every signal from the game does. 
 
 ### Message actions
 
-<img width="569" height="169" alt="image" src="https://github.com/user-attachments/assets/75ae8dab-382f-441d-9323-04e49c4e5991" />
+<img width="535" height="164" alt="image" src="https://github.com/user-attachments/assets/74c9872f-4512-4c88-a368-e0e4663ee512" />
 
 When people send pretty visuals, you can use this to see them. Enter the ID of the message (the grey number to the right of the callsign in the `RELAY` window) into the text entry field and click `VIEW`.
 
