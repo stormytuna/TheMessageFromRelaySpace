@@ -56,9 +56,9 @@ Under the `ADD NEW SIGNALS` text, there are 2 text entry fields and a `MAKE` but
 
 This signal persists with your dictionary like every signal from the game does. You can edit it, add formatting, add notes, etc, just as you can with any other signal. If you want to permanently remove a custom signal, hold control and click the delete button in the dictionary menu.
 
-### View visuals
+### Message actions
 
-<img width="729" height="169" alt="image" src="https://github.com/user-attachments/assets/5823e19c-f085-4d8a-9c46-2eb76a3a5449" />
+<img width="569" height="169" alt="image" src="https://github.com/user-attachments/assets/75ae8dab-382f-441d-9323-04e49c4e5991" />
 
 When people send pretty visuals, you can use this to see them. Enter the ID of the message (the grey number to the right of the callsign in the `RELAY` window) into the text entry field and click `VIEW`.
 
