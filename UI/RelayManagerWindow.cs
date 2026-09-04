@@ -547,6 +547,8 @@ public class RelayManagerWindow : InfoWindow
 		}
 
 		puzzleCounter.StartCoroutine(puzzleCounter.UpdateCounterRoutine(PuzzleManager.Instance.TotalPuzzleID + 1, 0f));
+		// Left hand side digit wheel doesn't scroll if changing to a <4 digit number so manually scrolling to 0
+		puzzleCounter.digitWheels[0].ScrollTo(0);
 
 		switchToInputButton.SetActive(false);
 		RelayManagerWindow.relaySocket.Disconnect();
