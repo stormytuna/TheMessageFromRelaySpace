@@ -18,6 +18,7 @@ public class TRFDSPlugin : BaseUnityPlugin
 	public static ConfigEntry<bool> ShowInitialMessagesInstantly;
 	public static ConfigEntry<bool> ShortenVisuals;
 	public static ConfigEntry<string> RelaySource;
+	public static ConfigEntry<bool> ForceEnableRelay;
 
 	internal static new ManualLogSource Logger;
 
@@ -76,6 +77,11 @@ public class TRFDSPlugin : BaseUnityPlugin
 		key = "RelaySource";
 		description = "The web socket source to pull Relay messages from";
 		RelaySource = Config.Bind(section, key, "wss://dscr-relay.dixonary.co.uk", description);
+
+		section = "Debug";
+		key = "ForceEnableRelay";
+		description = "Forces access to the Relay to be enabled, regardless of if you've finished the game or not. WARNING: This is an option provided for debugging, please do not enable this if you haven't finished the game";
+		ForceEnableRelay = Config.Bind(section, key, false, description);
 	}
 }
 

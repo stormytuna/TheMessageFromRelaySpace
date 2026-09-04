@@ -58,6 +58,11 @@ public class RelayManagerWindow : InfoWindow
 			return;
 		}
 
+		if (!TRFDSPlugin.ForceEnableRelay.Value && PuzzleManager.Instance.CurrPuzzle.uniqueID != 922) {
+			TRFDSPlugin.Logger.LogWarning("Relay unavailable, please finish the game before chatting.");
+			return;
+		}
+
 		var songPlayerObj = new GameObject("Song Player");
 		songPlayerObj.AddComponent<SongPlayer>();
 		songPlayer = songPlayerObj.GetComponent<SongPlayer>();
