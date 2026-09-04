@@ -1,3 +1,6 @@
+using System.Linq;
+using UnityEngine;
+
 namespace TRFDS.Helpers;
 
 public static class RelayHelpers
@@ -18,5 +21,21 @@ public static class RelayHelpers
 		}
 
 		return -1;
+	}
+
+	public static void AddHotkey(GameObject obj, KeyCode modifier, KeyCode activator) {
+		AddHotkey(obj.GetComponent<Button3D>(), modifier, activator);
+	}
+
+	public static void AddHotkey(Transform obj, KeyCode modifier, KeyCode activator) {
+		AddHotkey(obj.GetComponent<Button3D>(), modifier, activator);
+	}
+
+	public static void AddHotkey(Button3D button, KeyCode modifier, KeyCode activator) {
+		HotkeyManager.Instance.recipients = HotkeyManager.Instance.recipients.Append(new HotkeyRecipient {
+			button = button.GetComponent<Button3D>(),
+			modifierKey = modifier,
+			activatorKey = activator,
+		}).ToArray();
 	}
 }

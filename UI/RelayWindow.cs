@@ -57,6 +57,8 @@ public class RelayWindow
 		UnityHelpers.ScaleMeshVertices(logoutButton.GetComponent<MeshFilter>().mesh, 0.7f);
 		logoutButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.3f;
 		logoutButton.GetComponentInChildren<TextMeshPro>().transform.position += Vector3.right * 0.0365f;
+		RelayHelpers.AddHotkey(logoutButton.GetComponentInChildren<Button3D>(), KeyCode.LeftControl, KeyCode.L);
+		RelayHelpers.AddHotkey(logoutButton.GetComponentInChildren<Button3D>(), KeyCode.RightControl, KeyCode.L);
 
 		recompileButton = topBar.transform.GetChild(2).gameObject;
 		recompileButton.name = "Recompile Button";
@@ -69,6 +71,9 @@ public class RelayWindow
 		recompileButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.15f;
 		recompileButton.GetComponentInChildren<TextMeshPro>().transform.position += Vector3.right * 0.0439f;
 		recompileButton.gameObject.SetActive(false);
+		RelayHelpers.AddHotkey(recompileButton, KeyCode.LeftControl, KeyCode.T);
+		RelayHelpers.AddHotkey(recompileButton, KeyCode.RightControl, KeyCode.T);
+		HotkeyManager.Instance.SetButtonHotkeyDictionary();
 
 		var relayOutputObj = topBar.transform.Find("Output Display");
 		relayOutputObj.name = "Relay Output Signals";

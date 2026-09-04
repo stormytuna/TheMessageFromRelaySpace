@@ -1,6 +1,6 @@
 - [ ] Some kind of sound when messages are receieved
 - [ ] Perhaps, RELAY explanation in the REFERENCE tab
-- [ ] Hotkeys, coopt vanilla ones, show the thing on the left 
+- [x] Hotkeys, coopt vanilla ones, show the thing on the left 
 - [x] Music should be unavailable if the player hasnt defined -577
 - [ ] Most MANAGER screen things should only be available if the player is logged in to the relay
 - [ ] Warning popup is a little too high to be useful, it goes over the SELECT CHANNEL text, making it very difficult to read
@@ -11,3 +11,4 @@
 - [x] Make playing a song pause the current music, then play it when it's finished
 - [x] Make songs use SFX volume
 - [x] Tweak how song data is created, it crackles and multiple notes sound strange
+- [ ] Lock the relay behind something. Finishing the game, or enabling a config

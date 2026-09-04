@@ -135,6 +135,8 @@ public class RelayManagerWindow : InfoWindow
 		puzzleCounter = UnityHelpers.FindSingleInstanceObject<PuzzleCounter>();
 		playerInputOscilloscope = GameObject.Find("Input Oscilloscope").GetComponent<Oscilloscope>();
 
+		HotkeyManager.Instance.SetButtonHotkeyDictionary();
+
 		RelaySocket.CallsignProcessed.AddListener((goodCallsign) => {
 			if (goodCallsign) {
 				GoodCallsign();
@@ -206,6 +208,8 @@ public class RelayManagerWindow : InfoWindow
 		UnityHelpers.ScaleMeshVertices(switchToInputButton.GetComponent<MeshFilter>().mesh, 0.6f);
 		switchToInputButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.4f;
 		switchToInputButton.gameObject.SetActive(false);
+		RelayHelpers.AddHotkey(switchToInputButton, KeyCode.LeftControl, KeyCode.R);
+		RelayHelpers.AddHotkey(switchToInputButton, KeyCode.RightControl, KeyCode.R);
 
 		var switchToInputText = switchToInputButton.transform.Find("Text");
 		switchToInputText.position += Vector3.right * 0.0325f;
@@ -396,6 +400,10 @@ public class RelayManagerWindow : InfoWindow
 		GameObject.Destroy(sendMessageButton.transform.Find("Icon").gameObject);
 		UnityHelpers.ScaleMeshVertices(sendMessageButton.GetComponent<MeshFilter>().mesh, 0.5f);
 		sendMessageButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.5f;
+		RelayHelpers.AddHotkey(sendMessageButton, KeyCode.LeftControl, KeyCode.E);
+		RelayHelpers.AddHotkey(sendMessageButton, KeyCode.RightControl, KeyCode.E);
+		RelayHelpers.AddHotkey(sendMessageButton, KeyCode.LeftControl, KeyCode.Return);
+		RelayHelpers.AddHotkey(sendMessageButton, KeyCode.RightControl, KeyCode.Return);
 
 		var sendMessageText = sendMessageButton.transform.Find("Text");
 		sendMessageText.position += Vector3.right * 0.0325f;
@@ -410,6 +418,8 @@ public class RelayManagerWindow : InfoWindow
 		GameObject.Destroy(managerButton.transform.Find("Icon").gameObject);
 		UnityHelpers.ScaleMeshVertices(managerButton.GetComponent<MeshFilter>().mesh, 0.8f);
 		managerButton.GetComponent<BoxCollider>().size -= Vector3.right * 0.2f;
+		RelayHelpers.AddHotkey(managerButton, KeyCode.LeftControl, KeyCode.R);
+		RelayHelpers.AddHotkey(managerButton, KeyCode.RightControl, KeyCode.R);
 
 		var managerText = managerButton.transform.Find("Text");
 		managerText.position += Vector3.right * 0.0355f;
