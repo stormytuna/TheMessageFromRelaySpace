@@ -277,7 +277,7 @@ public class RelayWindow
 				return;
 			}
 
-			if (sig > int.MaxValue) {
+			if (sig >= 0) {
 				foreach (var ch in sig.ToString()) {
 					// Evil and fucked up way of doing it, but the game compiler is made to handle numbers like this so it works
 					parsedSignals.Add(ch - '0');
