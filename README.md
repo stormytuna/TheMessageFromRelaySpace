@@ -72,26 +72,35 @@ This signal persists with your dictionary like every signal from the game does. 
 
 ### Message actions
 
+<img width="565" height="166" alt="image" src="https://github.com/user-attachments/assets/875ab3e3-f9cf-412d-8556-83710d777a87" />
+
 You can use this section to copy the text of a message, copy the signals of a message, and view visuals in a message. Before clicking any of the buttons, you need to select a message by entering the ID of it. The ID is the gray number to the right of the callsign in the `RELAY` window.
 
 To copy a message's text, simply click `COPY`. To copy a message's signals, hold CTRL and click `COPY`.
 
-<img width="535" height="164" alt="image" src="https://github.com/user-attachments/assets/74c9872f-4512-4c88-a368-e0e4663ee512" />
+To view a message's visual data, click `VIEW`. Messages with visual data are shortened by default, as *you* aren't supposed to read and understand the contents of them, your *computer* is!
 
-To view a message's visual data, click `VIEW`.
+<img width="1136" height="891" alt="image" src="https://github.com/user-attachments/assets/382485c8-87c4-4491-9713-88fa21911b66" />
+
+Image created by [astro (callsign 1574)](https://github.com/A5TR0spud)
 
 There is another type of data that messages can contain. Huge thanks to electraminer (callsign 3544) for allowing me to reference their implementation of this feature when I was writing mine. The protocol was created for the Relay specifically, and isn't something you'd receive from Meteor 0. If you wish to find out about it on the Relay (which I highly recommend you do), please skip this section.
 
 <details>
   <summary>Spoilers lie here, beware!</summary>
+
+  <details>
+    <summary>You have been warned!!</summary>
+  <img width="1156" height="177" alt="image" src="https://github.com/user-attachments/assets/f6885422-bc85-4224-8604-6c3c84e4210a" />
+
+  Music is able to be transmitted over the Relay. The grammar is not documented here as to preserve the creators' intentions. Once you define `-577`, a new `PLAY` button appears.
   
-  Music is able to be transmitted over the Relay. The grammar is not documented here as to preserve the creators' intentions. Once you define `-577`, a new `PLAY` button appears. If someone sends a message with a song, you can enter the ID and click `PLAY` to listen to it. The `PLAY` button becomes a `STOP` button while Relay music is playing, and you can see the track's total length and your current position. Additionally, TMfDS's music will pause while you're listening to Relay music, and begin again once it stops.
+  If someone sends a message with a song, you can enter the ID and click `PLAY` to listen to it. The `PLAY` button becomes a `STOP` button while Relay music is playing, and you can see the track's total length and your current position. Additionally, TMfDS's music will pause while you're listening to Relay music, and begin again once it stops.
 
+  Similar to messages with a visual, messages with songs are shortened to remove the contents of the song structure. You can see a song's structure by `COPY`ing the message, then pasting it into the `INPUT` window or another text editor.
+    
+  </details>
 </details>
-
-<img width="1136" height="891" alt="image" src="https://github.com/user-attachments/assets/382485c8-87c4-4491-9713-88fa21911b66" />
-
-Image created by [astro (callsign 1574)](https://github.com/A5TR0spud)
 
 ### Channels
 
@@ -116,4 +125,6 @@ Many aspects of this mod are configurable, you can find details on each config o
 
 ## Limitations
 
-Currently, TRfDS will fail to parse any Relay message that has a negative number lower than -2147483648 (AKA the signed 32 bit integer minimum value). This is because the Relay allows signals to be sent as 64 bit integers, while TMfDS's compiler expects all signals to be 32 bit integers. This shouldn't matter in practice, as people should never be creating signals lower than this number, but it is worth knowing about. TRfDS can parse positive integers of any value, even larger than the Relay can send.
+TRfDS will fail to parse any Relay message that has a negative number lower than -2147483648 (AKA the signed 32 bit integer minimum value). This is because the Relay allows signals to be sent as 64 bit integers, while TMfDS's compiler expects all signals to be 32 bit integers. This shouldn't matter in practice, as people should never be creating signals lower than this number, but it is worth knowing about. TRfDS can parse positive integers of any value, even larger than the Relay can send.
+
+Messages with visual data are shortened as the player isn't supposed to read the contents of the visual and understand it. However, the message is not verified as a parse-able visual before being shortened. If you find a visual on the Relay that cannot be `VIEW`ed, it's likely either a mistake by the person creating it, or TRfDS shortened it when it shouldn't have. You can view the contents of such messages by `COPY`ing the text and pasting it into the `INPUT` screen or any other text editor.
