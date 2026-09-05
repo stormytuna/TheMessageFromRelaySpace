@@ -2,10 +2,8 @@
 
 A mod for the game [The Message from Deep Space](https://store.steampowered.com/app/4080030/The_Message_from_Deep_Space/) that allows players to communicate over the [Deep Space Communication Relay](https://dscr.dixonary.co.uk/) in-game.
 
-TRfDS is in beta currently. Expect things to break.
-
 ## Installation
-Before you install, it is highly, **highly** recommended you complete the game first!
+Before you install, it is highly, **highly**, recommended you complete the game first! The Relay will not show up until you have, to prevent your playthrough of TMfDS being spoiled.
 
 ### Thunderstore
 
@@ -38,9 +36,7 @@ After installing the mod, you will see a new `RELAY` button on the main tabs vie
 
 <img width="355" height="118" alt="image" src="https://github.com/user-attachments/assets/3b9eb9be-83cd-4c96-ade5-31f554ac146f" />
 
-The `RELAY MANAGER`, `RELAY INPUT`, and `RELAY` screens are how you interact with the Relay. The `RELAY MANAGER` screen is daunting at first, but all of the features are explaiend in the [Features](README.md#Features) section below.
-
-For now, enter a callsign, in base 8, and then click `SET` to begin chatting.
+The `RELAY MANAGER`, `RELAY INPUT`, and `RELAY` screens are how you interact with the Relay. Enter a callsign, in base 8, and then click `SET` to begin chatting.
 
 <img width="2822" height="1043" alt="image" src="https://github.com/user-attachments/assets/990568d7-3965-4080-877c-3c3ff130a817" />
 
@@ -50,7 +46,21 @@ There is another button on the `RELAY` screen, `RECOMPILE`. Whenever you define 
 
 ## Features
 
-You'll want to be on the `RELAY MANAGER` screen for most of this. It's recommended to set a callsign, then return to this screen by clicking the `MANAGER` button. You can return to the `RELAY INPUT` screen by clicking `INPUT`.
+You need to set a callsign to access most of the `RELAY MANAGER` features. After entering a callsign, you can open the the `RELAY MANAGER` screen by clicking the `MANAGER` button, and you can return to the `RELAY INPUT` screen by clicking `INPUT`.
+
+### Hotkeys
+
+TRfDS attaches hotkeys to many of the buttons it adds. When hovering over a button, you can see if there's a hotkey attached to it on the left hand side, underneath the currently playing track.
+- `RECOMPILE`: CTRL+T
+- `LOGOUT`: CTRL+L
+- `MANAGER`/`INPUT`: CTRL+R
+- `SEND`: CTRL+E or CTRL+ENTER
+
+### Sending signals that aren't defined
+
+Sometimes, you will want to send a signal you haven't defined in your dictionary yet. You can do this by entering `|-<signal>`. For example, if you define `-2` as "STOP" in your dictionary, sending `|-2` will appear (for you) as "STOP". Similarly, if you haven't defined `-246` and you enter `|-246`, it will appear (for you) as `@-246_UNDEF`.
+
+This is useful for when you are learning a new word and aren't sure what to call it yet, but you want to ask a clarifying question without creating a temporary definition.
 
 ### Adding new signals to the dictionary
 
@@ -62,9 +72,22 @@ This signal persists with your dictionary like every signal from the game does. 
 
 ### Message actions
 
+You can use this section to copy the text of a message, copy the signals of a message, and view visuals in a message. Before clicking any of the buttons, you need to select a message by entering the ID of it. The ID is the gray number to the right of the callsign in the `RELAY` window.
+
+To copy a message's text, simply click `COPY`. To copy a message's signals, hold CTRL and click `COPY`.
+
 <img width="535" height="164" alt="image" src="https://github.com/user-attachments/assets/74c9872f-4512-4c88-a368-e0e4663ee512" />
 
-When people send pretty visuals, you can use this to see them. Enter the ID of the message (the grey number to the right of the callsign in the `RELAY` window) into the text entry field and click `VIEW`.
+To view a message's visual data, click `VIEW`.
+
+There is another type of data that messages can contain. Huge thanks to electraminer (callsign 3544) for allowing me to reference their implementation of this feature when I was writing mine. The protocol was created for the Relay specifically, and isn't something you'd receive from Meteor 0. If you wish to find out about it on the Relay (which I highly recommend you do), please skip this section.
+
+<details>
+  <summary>Spoilers lie here, beware!</summary>
+  
+  Music is able to be transmitted over the Relay. The grammar is not documented here as to preserve the creators' intentions. Once you define `-577`, a new `PLAY` button appears. If someone sends a message with a song, you can enter the ID and click `PLAY` to listen to it. The `PLAY` button becomes a `STOP` button while Relay music is playing, and you can see the track's total length and your current position. Additionally, TMfDS's music will pause while you're listening to Relay music, and begin again once it stops.
+
+</details>
 
 <img width="1136" height="891" alt="image" src="https://github.com/user-attachments/assets/382485c8-87c4-4491-9713-88fa21911b66" />
 
@@ -90,3 +113,7 @@ Channels you're in are saved and loaded from disk. You can find this file by nav
 ## Configuration
 
 Many aspects of this mod are configurable, you can find details on each config option in the config file that BepInEx generates. Note: It is only generated after launching with the mod enabled, so you will need to launch once to see the config file at all.
+
+## Limitations
+
+Currently, TRfDS will fail to parse any Relay message that has a negative number lower than -2147483648 (AKA the signed 32 bit integer minimum value). This is because the Relay allows signals to be sent as 64 bit integers, while TMfDS's compiler expects all signals to be 32 bit integers. This shouldn't matter in practice, as people should never be creating signals lower than this number, but it is worth knowing about. TRfDS can parse positive integers of any value, even larger than the Relay can send.
