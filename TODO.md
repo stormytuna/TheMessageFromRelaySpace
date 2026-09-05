@@ -2,8 +2,8 @@
 - [x] Hotkeys, coopt vanilla ones, show the thing on the left 
 - [x] Music should be unavailable if the player hasnt defined -577
 - [x] Most MANAGER screen things should only be available if the player is logged in to the relay
-- [ ] Warning popup is a little too high to be useful, it goes over the SELECT CHANNEL text, making it very difficult to read
-- [ ] Send positive numbers as whole values rather than comma separated
+- [x] Warning popup is a little too high to be useful, it goes over the SELECT CHANNEL text, making it very difficult to read
+- [x] Send positive numbers as whole values rather than comma separated
 - [x] Scrollable left hand side input
     - [x] Also remove limit on how many chars can be input
 - [x] COPY button on manager screen, requires a little tinkering to get everything to fit

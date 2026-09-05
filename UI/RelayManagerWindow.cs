@@ -163,10 +163,9 @@ public class RelayManagerWindow : InfoWindow
 	}
 
 	private void InitManagerViewport() {
-		relayManagerViewport.GetComponentInChildren<TextMeshPro>().text = "Relay Manager"; // Rename
+		relayManagerViewport.GetComponentInChildren<TextMeshPro>().text = "Relay Manager";
 
 		calculatorWindow = GameObject.Find("Calculator Window").GetComponent<CalculatorWindow>();
-		popupBox = UnityHelpers.FindSingleInstanceObject<PopupBox>("Idea Popup");
 		visualWindow = UnityHelpers.FindSingleInstanceObject<VisualWindow>();
 
 		var callsignLabel = GameObject.Instantiate(calculatorWindow.outputLabel.gameObject);
@@ -331,8 +330,6 @@ public class RelayManagerWindow : InfoWindow
 		copyMessageSignalsButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		copyMessageSignalsButton.GetComponent<Button3D>().OnUseButton.AddListener(CopySignals);
 		copyMessageSignalsButton.GetComponentInChildren<TextMeshPro>().text = "Copy";
-		RelayHelpers.AddHotkey(copyMessageSignalsButton, KeyCode.LeftControl, KeyCode.C);
-		RelayHelpers.AddHotkey(copyMessageSignalsButton, KeyCode.RightControl, KeyCode.C);
 		
 		var viewMessageVisualButton = GameObject.Instantiate(exampleButton).gameObject;
 		hiddenUntilLoggedIn.Add(viewMessageVisualButton);
@@ -342,8 +339,6 @@ public class RelayManagerWindow : InfoWindow
 		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		viewMessageVisualButton.GetComponent<Button3D>().OnUseButton.AddListener(ViewVisual);
 		viewMessageVisualButton.GetComponentInChildren<TextMeshPro>().text = "View";
-		RelayHelpers.AddHotkey(viewMessageVisualButton, KeyCode.LeftControl, KeyCode.V);
-		RelayHelpers.AddHotkey(viewMessageVisualButton, KeyCode.RightControl, KeyCode.V);
 
 		playMessageSongButton = GameObject.Instantiate(exampleButton).gameObject;
 		hiddenUntilLoggedIn.Add(playMessageSongButton);
@@ -352,8 +347,6 @@ public class RelayManagerWindow : InfoWindow
 		playMessageSongButton.transform.position = new Vector3(-29.822f, 4.77f, 0.216f);
 		playMessageSongButton.GetComponent<Button3D>().OnUseButton = new UnityEngine.Events.UnityEvent();
 		playMessageSongButton.GetComponent<Button3D>().OnUseButton.AddListener(PlayStopSong);
-		RelayHelpers.AddHotkey(playMessageSongButton, KeyCode.LeftControl, KeyCode.P);
-		RelayHelpers.AddHotkey(playMessageSongButton, KeyCode.RightControl, KeyCode.P);
 
 		playMessageSongText = playMessageSongButton.GetComponentInChildren<TextMeshPro>();
 		playMessageSongText.text = "Play";
@@ -415,6 +408,11 @@ public class RelayManagerWindow : InfoWindow
 		currentChannelLabel.textWrappingMode = TextWrappingModes.NoWrap;
 		currentChannelLabel.overflowMode = TextOverflowModes.Overflow;
 		currentChannelLabel.alignment = TextAlignmentOptions.Center;
+
+		var popupBoxObj = GameObject.Instantiate(UnityHelpers.FindSingleInstanceObject<PopupBox>("Idea Popup"));
+		popupBoxObj.name = "Relay Popup";
+		popupBox = popupBoxObj.GetComponent<PopupBox>();
+		popupBox.rootPos = popupBox.rootPos with { y = 4f };
 	}
 
 	private void InitInputViewport() {
@@ -669,8 +667,16 @@ public class RelayManagerWindow : InfoWindow
 			signalMessage.signals = new int[]{-65535, activeChannelId}.Concat(signalMessage.signals).ToArray();
 		}
 
-		var signals = signalMessage.signals.Join(delimiter: ",");
-		var compiledMessage = "M," + signals;
+		string compiledMessage = "M,";
+		for (int i = 0; i < signalMessage.signals.Length; i++) {
+			int sig = signalMessage.signals[i];
+			if (sig < 0 || signalMessage.signals.ElementAtOrDefault(i + 1) < 0) {
+				compiledMessage += sig + ",";
+			} else {
+				compiledMessage += sig;
+			}
+		}
+		compiledMessage = compiledMessage.TrimEnd(',');
 
 		RelaySocket.QueueSend(compiledMessage);
 
@@ -727,19 +733,19 @@ public class RelayManagerWindow : InfoWindow
 
 	private void CopySignals() {
 		if (RelayWindow.receivedMessages.Count <= 0) {
-			popupBox.PopupWithLabel("No messages to try select :(");
+			popupBox.PopupWithLabel("No msg to try select");
 			return;
 		}
 
 		string selectedMessageText = messageSelectorInput.text.Trim(' ').Trim('\u200b');
 		if (!short.TryParse(selectedMessageText, out var selectedMessageId)) {
-			popupBox.PopupWithLabel("Message ID must be an integer");
+			popupBox.PopupWithLabel("Msg ID must be an integer");
 			return;
 		}
 
 		var index = RelayWindow.activeChannel.FindIndex(0, x => x.TransmissionId == selectedMessageId);
 		if (index < 0) {
-			popupBox.PopupWithLabel("Message " + selectedMessageId + " not in active channel");
+			popupBox.PopupWithLabel("Msg " + selectedMessageId + " not in active channel");
 			return;
 		}
 
@@ -766,24 +772,24 @@ public class RelayManagerWindow : InfoWindow
 		}
 
 		GUIUtility.systemCopyBuffer = compiledOutput.ToUpper();
-		popupBox.PopupWithLabel("Copied message");
+		popupBox.PopupWithLabel("Copied msg text");
 	}
 
 	private void ViewVisual() {
 		if (RelayWindow.receivedMessages.Count <= 0) {
-			popupBox.PopupWithLabel("No messages to try select :(");
+			popupBox.PopupWithLabel("No msg to try select");
 			return;
 		}
 
 		string selectedMessageText = messageSelectorInput.text.Trim(' ').Trim('\u200b');
 		if (!short.TryParse(selectedMessageText, out var selectedMessageId)) {
-			popupBox.PopupWithLabel("Message ID must be an integer");
+			popupBox.PopupWithLabel("Msg ID must be an integer");
 			return;
 		}
 
 		var index = RelayWindow.activeChannel.FindIndex(0, x => x.TransmissionId == selectedMessageId);
 		if (index < 0) {
-			popupBox.PopupWithLabel("Message " + selectedMessageId + " not in active channel");
+			popupBox.PopupWithLabel("Msg " + selectedMessageId + " not in active channel");
 			return;
 		}
 
@@ -804,7 +810,7 @@ public class RelayManagerWindow : InfoWindow
 		}
 
 		if (!foundVisual) {
-			popupBox.PopupWithLabel("Message " + selectedMessageId + " has no visual data");
+			popupBox.PopupWithLabel("Msg " + selectedMessageId + " has no visual data");
 			return;
 		}
 
@@ -823,19 +829,19 @@ public class RelayManagerWindow : InfoWindow
 		}
 
 		if (RelayWindow.receivedMessages.Count <= 0) {
-			popupBox.PopupWithLabel("No messages to try select :(");
+			popupBox.PopupWithLabel("No msg to try select");
 			return;
 		}
 
 		string selectedMessageText = messageSelectorInput.text.Trim(' ').Trim('\u200b');
 		if (!short.TryParse(selectedMessageText, out var selectedMessageId)) {
-			popupBox.PopupWithLabel("Message ID must be an integer");
+			popupBox.PopupWithLabel("Msg ID must be an integer");
 			return;
 		}
 
 		var index = RelayWindow.activeChannel.FindIndex(0, x => x.TransmissionId == selectedMessageId);
 		if (index < 0) {
-			popupBox.PopupWithLabel("Message " + selectedMessageId + " not in active channel");
+			popupBox.PopupWithLabel("Msg " + selectedMessageId + " not in active channel");
 			return;
 		}
 
