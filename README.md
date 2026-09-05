@@ -23,6 +23,8 @@ Install [BepInEx](https://docs.bepinex.dev/articles/user_guide/installation/inde
 
 > [!IMPORTANT]
 > LINUX ONLY: Right click TMfDS -> Properties. Under the General tab, set the Launch Options to `WINEDLLOVERRIDES="winhttp=n,b" %command%`
+>
+> If you **don't** see a `winhttp.dll` file like the above screenshot has, then you have likely downloaded BepInEx for Linux. Please delete what you have extracted into the game's folder and install the correct version
 
 Install the mod:
 1. Run the game once to setup BepInEx. After you close the game, you should see BepInEx has created a folder, `%GAMEROOT%/BepInEx/plugins`
