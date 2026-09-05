@@ -12,5 +12,5 @@
 - [x] Tweak how song data is created, it crackles and multiple notes sound strange
 - [x] Lock the relay behind something. Finishing the game, or enabling a config
 - [ ] Logs that make the Relay "canon" and a bit more part of the game, rather than a supplementary thing. 3544 sent something for this
-- [ ] Currently cannot parse values greater than int max value
-- [ ] Make compiler parse `|-number` so people can send undefs without knowing them
+- [x] Currently cannot parse values greater than int max value
+- [x] Make compiler parse `|-number` so people can send undefs without knowing them

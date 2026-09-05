@@ -16,6 +16,7 @@ namespace TRFDS.UI;
 [HarmonyPatch]
 public class RelayWindow
 {
+
 	private const float LinesPerPage = 12.315f;
 
 	public static Dictionary<int, List<RelayMessage>> receivedMessages;
@@ -267,11 +268,31 @@ public class RelayWindow
 		var matches = messageRegex.Match(text);
 		string sender = matches.Groups[1].Value;
 		string messageNumber = matches.Groups[2].Value;
+		long[] relaySignals = matches.Groups[3].Value.Split(',').Select(x => long.Parse(x)).ToArray();
+		List<int> parsedSignals = new List<int>();
+		for (int i = 0; i < relaySignals.Length; i++) {
+			long sig = relaySignals[i];
+			if (sig < int.MinValue) {
+				TRFDSPlugin.Logger.LogError("Failed to parse message. Someone sent a signal less than int.MaxValue, why ;-;");
+				return;
+			}
 
-		int[] messageSignals = matches.Groups[3].Value.Split(',').Select(x => int.Parse(x)).ToArray();
+			if (sig > int.MaxValue) {
+				foreach (var ch in sig.ToString()) {
+					// Evil and fucked up way of doing it, but the game compiler is made to handle numbers like this so it works
+					parsedSignals.Add(ch - '0');
+				}
+				continue;
+			}
+
+			parsedSignals.Add((int)sig);
+		}
+
+		int[] messageSignals = parsedSignals.ToArray();
+
 		var signalMessage = new SignalMessage() with { signals = messageSignals };
 
-		if (!isInitialMessage && TRFDSPlugin.PlayConfetti.Value && messageSignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702)) {
+		if (!isInitialMessage && TRFDSPlugin.PlayConfetti.Value && relaySignals.Contains(-702) && UserDictionary.Instance.terms.ContainsKey(-702)) {
 			GameObject.Find("Confetti L (Controller)").GetComponent<ConfettiCannon>().Fire();
 		}
 
